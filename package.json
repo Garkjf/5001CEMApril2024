@@ -1,0 +1,12 @@
+{
+    "name": "calladoctor",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+      "start": "python 5001CEMApril2024/CallADoctor/Model/login.py",
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "description": ""
+  }
