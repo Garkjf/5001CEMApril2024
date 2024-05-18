@@ -1,8 +1,8 @@
-## Call A Doctor Application
+# Call A Doctor Application
 
 Call a Doctor (CaD) is an application that patients can use to call doctors conveniently to their homes. Now with this application, they can consult a doctor in the comfort of their homes. This app is created using Tkinter.
 
-# Features
+## Features
 A patient can use this application to search or view clinic that is available in the clinic list. A patient is able to view the registered clinic in the map that is available in this application. A patient can also use this application to send a request for a doctor to the chosen clinic.
 
 From the clinic point of view, an administrator can use this application to accept or reject the requests from the patient. An administrator have the right to add or delete the doctor from the doctor list of the user clinic. Besides, an administrator is able to use this application to view the available and busy doctors. An administrator can also assign the available doctor in order to response for the accepted request for the patient.
