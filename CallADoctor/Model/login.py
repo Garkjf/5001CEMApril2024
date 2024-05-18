@@ -38,6 +38,7 @@ class StartPage(tk.Frame):
 class PatientFrame(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
+        tk.Button(self, text="<-", command=lambda: parent.show_frame(StartPage)).pack(pady=10)
         tk.Label(self, text="Patient Features").pack(pady=10)
 
         tk.Button(self, text="View Clinics", command=self.view_clinics).pack(pady=10)
@@ -53,6 +54,7 @@ class PatientFrame(tk.Frame):
 class ClinicAdminFrame(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
+        tk.Button(self, text="<-", command=lambda: parent.show_frame(StartPage)).pack(pady=10)
         tk.Label(self, text="Clinic Admin Features").pack(pady=10)
 
         tk.Button(self, text="Add Doctor", command=self.add_doctor).pack(pady=10)
@@ -68,6 +70,7 @@ class ClinicAdminFrame(tk.Frame):
 class DoctorFrame(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
+        tk.Button(self, text="<-", command=lambda: parent.show_frame(StartPage)).pack(pady=10)
         tk.Label(self, text="Doctor Features").pack(pady=10)
 
         tk.Button(self, text="View Requests", command=self.view_requests).pack(pady=10)
@@ -83,6 +86,7 @@ class DoctorFrame(tk.Frame):
 class SystemAdminFrame(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
+        tk.Button(self, text="<-", command=lambda: parent.show_frame(StartPage)).pack(pady=10)
         tk.Label(self, text="System Admin Features").pack(pady=10)
 
         tk.Button(self, text="Approve Clinics", command=self.approve_clinics).pack(pady=10)
