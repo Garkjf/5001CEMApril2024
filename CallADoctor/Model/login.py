@@ -1,104 +1,121 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox
+import firebase_admin
+from firebase_admin import credentials, auth
 
-# Main Application Window
-class CallADoctorApp(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("Call a Doctor")
-        self.geometry("600x400")
+# Initialize Firebase
+cred = credentials.Certificate("C:/Users/woeil/OneDrive/Documents/CallADoctor/5001CEMApril2024/CallADoctor/calladoctor-serviceAccountKey.json") #Change the path to your own serviceAccountKey.json
+firebase = firebase_admin.initialize_app(cred)
 
-        self.frames = {}
-
-        # Initialize different frames (screens) in the same window
-        for F in (StartPage, PatientFrame, ClinicAdminFrame, DoctorFrame, SystemAdminFrame):
-            frame = F(self)
-            self.frames[F] = frame
-            frame.grid(row=0, column=0, sticky="nsew")
-
-        # Display the start page initially
-        self.show_frame(StartPage)
-
-    def show_frame(self, frame_class):
-        frame = self.frames[frame_class]
-        frame.tkraise()
-
-# Start Page Frame
-class StartPage(tk.Frame):
+class LoginPage(tk.Frame):
     def __init__(self, parent):
-        super().__init__(parent)
-        tk.Label(self, text="Welcome to Call a Doctor!").pack(pady=20)
+        super().__init__(parent, bg="#9AB892")
 
-        tk.Button(self, text="Patient", command=lambda: parent.show_frame(PatientFrame)).pack(pady=10)
-        tk.Button(self, text="Clinic Admin", command=lambda: parent.show_frame(ClinicAdminFrame)).pack(pady=10)
-        tk.Button(self, text="Doctor", command=lambda: parent.show_frame(DoctorFrame)).pack(pady=10)
-        tk.Button(self, text="System Admin", command=lambda: parent.show_frame(SystemAdminFrame)).pack(pady=10)
+        # Header
+        self.label = tk.Label(self, text="Login Portal", bg="#9AB892", font=("Arial", 24))
+        self.label.grid(row=0, column=0, columnspan=7, pady=20, sticky="n") 
 
-# Patient Frame
-class PatientFrame(tk.Frame):
-    def __init__(self, parent):
-        super().__init__(parent)
-        tk.Button(self, text="<-", command=lambda: parent.show_frame(StartPage)).pack(pady=10)
-        tk.Label(self, text="Patient Features").pack(pady=10)
+        # Left side
+        self.label = tk.Label(self, text="Select Your Role\nWelcome to use our Call A Doctor Application.", bg="#9AB892")
+        self.label.grid(row=1, column=0, padx=20, sticky="w")
+        # Register label
+        self.label = tk.Label(self, text="New Here? ", bg="#9AB892")
+        self.label.grid(row=2, column=0, padx=20, pady=10, sticky="w") 
+        # Register button
+        self.register_button = tk.Button(self, text="Register Now!", command=self.register)
+        self.register_button.grid(row=2, column=0, padx=100, pady=10, sticky="w") 
+        # Logo
+        self.logo = tk.PhotoImage(file="C:/Users/woeil/OneDrive/Documents/CallADoctor/5001CEMApril2024/CallADoctor/Images/CallADoctor-logo.png")
+        self.logo = self.logo.subsample(2)  # Adjust the size of the logo image
+        self.logo_label = tk.Label(self, image=self.logo)
+        self.logo_label.grid(row=2, column=0, rowspan=11 ,padx=20 , sticky="w")
 
-        tk.Button(self, text="View Clinics", command=self.view_clinics).pack(pady=10)
-        tk.Button(self, text="Send Request", command=self.send_request).pack(pady=10)
+        # Left side End
 
-    def view_clinics(self):
-        messagebox.showinfo("Clinics", "Display clinics")
+        # Right Side
+        # Role selection
+        self.role_var = tk.StringVar()
+        self.label = tk.Label(self, text="Select Role", bg="#9AB892")
+        self.label.grid(row=1, column=4, padx=20, sticky="w") 
+        role_options = ["Choose Role", "Patient", "Doctor", "Clinic Admin"]
+        self.role_dropdown = ttk.Combobox(self, textvariable=self.role_var, values=role_options, state="readonly")
+        self.role_dropdown.current(0)  # Set the default value to "Choose Role"
+        self.role_dropdown.grid(row=2, column=4, padx=20, pady=10, sticky="w") 
+        self.role_dropdown.bind("<<ComboboxSelected>>", self.check_role_selection)
 
-    def send_request(self):
-        messagebox.showinfo("Request", "Send request")
+        # Clinic selection
+        self.clinic_var = tk.StringVar()
+        self.label = tk.Label(self, text="Select Clinic", bg="#9AB892")
+        self.label.grid(row=3, column=4, padx=20, sticky="w") 
+        clinic_options = ["Choose Clinic", "Bagan Ajam", "Bagan Specialist", "Sunway Hospital"]
+        self.clinic_dropdown = ttk.Combobox(self, textvariable=self.clinic_var, values=clinic_options, state="readonly")
+        self.clinic_dropdown.current(0)  # Set the default value to "Choose Clinic"
+        self.clinic_dropdown.grid(row=4, column=4, padx=20, pady=10, sticky="w")  
+        self.clinic_dropdown.bind("<<ComboboxSelected>>", self.check_clinic_selection)
 
-# Clinic Admin Frame
-class ClinicAdminFrame(tk.Frame):
-    def __init__(self, parent):
-        super().__init__(parent)
-        tk.Button(self, text="<-", command=lambda: parent.show_frame(StartPage)).pack(pady=10)
-        tk.Label(self, text="Clinic Admin Features").pack(pady=10)
+        # Clinic state Selection
+        self.clinic_state_var = tk.StringVar()
+        self.label = tk.Label(self, text="Select Clinic State", bg="#9AB892")
+        self.label.grid(row=5, column=4, padx=20, sticky="w")  # Changed column to 1
+        clinic_state_options = ["Choose Clinic State", "Penang", "Kuala Lumpur", "Johor"]
+        self.clinic_state_dropdown = ttk.Combobox(self, textvariable=self.clinic_state_var, values=clinic_state_options, state="readonly")
+        self.clinic_state_dropdown.current(0)  # Set the default value to "Choose Clinic State"
+        self.clinic_state_dropdown.grid(row=6, column=4, padx=20, pady=10, sticky="w") 
+        self.clinic_state_dropdown.bind("<<ComboboxSelected>>", self.check_clinic_state_selection)
 
-        tk.Button(self, text="Add Doctor", command=self.add_doctor).pack(pady=10)
-        tk.Button(self, text="Manage Requests", command=self.manage_requests).pack(pady=10)
+        # Username and password
+        self.label = tk.Label(self, text="Username", bg="#9AB892")
+        self.label.grid(row=7, column=4, padx=20, sticky="w")  
+        self.username_entry = tk.Entry(self)
+        self.username_entry.grid(row=8, column=4, padx=20, pady=10, sticky="w")  
 
-    def add_doctor(self):
-        messagebox.showinfo("Doctor", "Add new doctor")
+        self.label = tk.Label(self, text="Password", bg="#9AB892")
+        self.label.grid(row=9, column=4, padx=20, sticky="w")  
+        self.password_entry = tk.Entry(self, show="*")
+        self.password_entry.grid(row=10, column=4, padx=20, pady=10, sticky="w") 
+        # Submit button
+        self.submit_button = tk.Button(self, text="Submit", bg="#0275DD", fg="#ffffff", command=self.submit)
+        self.submit_button.grid(row=11, column=4, padx=20, pady=10, sticky="w") 
+        # Right Side End
 
-    def manage_requests(self):
-        messagebox.showinfo("Requests", "Manage requests")
+    def check_role_selection(self, event):
+        selected_role = self.role_var.get()
+        if selected_role == "Choose Role":
+            messagebox.showerror("Error", "Please select a role")
 
-# Doctor Frame
-class DoctorFrame(tk.Frame):
-    def __init__(self, parent):
-        super().__init__(parent)
-        tk.Button(self, text="<-", command=lambda: parent.show_frame(StartPage)).pack(pady=10)
-        tk.Label(self, text="Doctor Features").pack(pady=10)
+    def check_clinic_selection(self, event):
+        selected_clinic = self.clinic_var.get()
+        if selected_clinic == "Choose Clinic":
+            messagebox.showerror("Error", "Please select a clinic")
 
-        tk.Button(self, text="View Requests", command=self.view_requests).pack(pady=10)
-        tk.Button(self, text="Generate Prescription", command=self.generate_prescription).pack(pady=10)
+    def check_clinic_state_selection(self, event):
+        selected_clinic_state = self.clinic_state_var.get()
+        if selected_clinic_state == "Choose Clinic State":
+            messagebox.showerror("Error", "Please select a clinic state")    
 
-    def view_requests(self):
-        messagebox.showinfo("Requests", "View assigned requests")
+    def submit(self):
+        username = self.username_entry.get()
+        password = self.password_entry.get()
+        role = self.role_var.get()
+        clinic = self.clinic_var.get()
+        click_state = self.click_state_var.get()
 
-    def generate_prescription(self):
-        messagebox.showinfo("Prescription", "Generate prescription")
+        try:
+            user = auth.sign_in_with_email_and_password(username, password)
+            # You can add code here to handle role, clinic, and click state
+        except:
+            messagebox.showerror("Error", "Invalid username or password")
 
-# System Admin Frame
-class SystemAdminFrame(tk.Frame):
-    def __init__(self, parent):
-        super().__init__(parent)
-        tk.Button(self, text="<-", command=lambda: parent.show_frame(StartPage)).pack(pady=10)
-        tk.Label(self, text="System Admin Features").pack(pady=10)
-
-        tk.Button(self, text="Approve Clinics", command=self.approve_clinics).pack(pady=10)
-        tk.Button(self, text="View System Activity", command=self.view_system_activity).pack(pady=10)
-
-    def approve_clinics(self):
-        messagebox.showinfo("Clinics", "Approve clinics")
-
-    def view_system_activity(self):
-        messagebox.showinfo("System Activity", "View system activity")
+    def register(self):
+        # Navigate to the registration page
+        pass
 
 # Main Execution
 if __name__ == "__main__":
-    app = CallADoctorApp()
-    app.mainloop()
+    root = tk.Tk()  # Create a new Tk root window
+    root.title("Call a Doctor")  # Set the title of the window
+    root.geometry("750x550")
+    app = LoginPage(root)  # Pass the root window to your LoginPage class
+    app.pack(fill="both", expand=True)  # Make the LoginPage fill the entire window
+    root.mainloop()  # Start the Tkinter event loop
