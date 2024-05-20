@@ -3,13 +3,16 @@ from tkinter import ttk
 from tkinter import messagebox
 import firebase_admin
 from firebase_admin import credentials, auth
+import os
 import subprocess
 from SharePath import start_registration
-serviceAccountKeyFile = "C:/Users/woeil/OneDrive/Documents/CallADoctor/5001CEMApril2024/CallADoctor/calladoctor-serviceAccountKey.json"   #Change the path to your own serviceAccountKey.json
-logoImageFile = "C:/Users/woeil/OneDrive/Documents/CallADoctor/5001CEMApril2024/CallADoctor/Images/CallADoctor-logo.png"  # Change the path to your own logo image
+# Create relative file paths
+dir = os.path.dirname(__file__)
+accountKeyFile = os.path.join(dir, '../calladoctor-serviceAccountKey.json')
+logoFile = os.path.join(dir, '../Images/CallADoctor-logo.png')
 
 # Initialize Firebase
-cred = credentials.Certificate(serviceAccountKeyFile)
+cred = credentials.Certificate(accountKeyFile) #Change the path to your own serviceAccountKey.json
 firebase = firebase_admin.initialize_app(cred)
 
 def start_registration():
@@ -31,10 +34,10 @@ class LoginPage(tk.Frame):
         self.label.grid(row=2, column=0, padx=20, pady=10, sticky="w") 
         # Register button
         self.register_button = tk.Button(self, text="Register Now!", command=self.register)
-        self.register_button.grid(row=3, column=0, padx=100, sticky="w") 
-
-        self.logo = tk.PhotoImage(file=logoImageFile)
-        self.logo = self.logo.subsample(2)  
+        self.register_button.grid(row=3, column=0, padx=100, pady=10, sticky="w") 
+        # Logo
+        self.logo = tk.PhotoImage(file=logoFile)
+        self.logo = self.logo.subsample(2)  # Adjust the size of the logo image
         self.logo_label = tk.Label(self, image=self.logo)
         self.logo_label.grid(row=4, column=0, rowspan=11 ,padx=20 , sticky="w")
 
