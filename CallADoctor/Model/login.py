@@ -3,9 +3,15 @@ from tkinter import ttk
 from tkinter import messagebox
 import firebase_admin
 from firebase_admin import credentials, auth
+import os
+
+# Create relative file paths
+dir = os.path.dirname(__file__)
+accountKeyFile = os.path.join(dir, '../calladoctor-serviceAccountKey.json')
+logoFile = os.path.join(dir, '../Images/CallADoctor-logo.png')
 
 # Initialize Firebase
-cred = credentials.Certificate("C:/Users/woeil/OneDrive/Documents/CallADoctor/5001CEMApril2024/CallADoctor/calladoctor-serviceAccountKey.json") #Change the path to your own serviceAccountKey.json
+cred = credentials.Certificate(accountKeyFile) #Change the path to your own serviceAccountKey.json
 firebase = firebase_admin.initialize_app(cred)
 
 class LoginPage(tk.Frame):
@@ -26,7 +32,7 @@ class LoginPage(tk.Frame):
         self.register_button = tk.Button(self, text="Register Now!", command=self.register)
         self.register_button.grid(row=2, column=0, padx=100, pady=10, sticky="w") 
         # Logo
-        self.logo = tk.PhotoImage(file="C:/Users/woeil/OneDrive/Documents/CallADoctor/5001CEMApril2024/CallADoctor/Images/CallADoctor-logo.png")
+        self.logo = tk.PhotoImage(file=logoFile)
         self.logo = self.logo.subsample(2)  # Adjust the size of the logo image
         self.logo_label = tk.Label(self, image=self.logo)
         self.logo_label.grid(row=2, column=0, rowspan=11 ,padx=20 , sticky="w")
