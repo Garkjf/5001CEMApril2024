@@ -3,10 +3,17 @@ from tkinter import ttk
 from tkinter import messagebox
 import firebase_admin
 from firebase_admin import credentials, auth
+import subprocess
+from SharePath import start_registration
+serviceAccountKeyFile = "C:/Users/woeil/OneDrive/Documents/CallADoctor/5001CEMApril2024/CallADoctor/calladoctor-serviceAccountKey.json"   #Change the path to your own serviceAccountKey.json
+logoImageFile = "C:/Users/woeil/OneDrive/Documents/CallADoctor/5001CEMApril2024/CallADoctor/Images/CallADoctor-logo.png"  # Change the path to your own logo image
 
 # Initialize Firebase
-cred = credentials.Certificate("C:/Users/woeil/OneDrive/Documents/CallADoctor/5001CEMApril2024/CallADoctor/calladoctor-serviceAccountKey.json") #Change the path to your own serviceAccountKey.json
+cred = credentials.Certificate(serviceAccountKeyFile)
 firebase = firebase_admin.initialize_app(cred)
+
+def start_registration():
+    subprocess.call(["python", "C:/Users/woeil/OneDrive/Documents/CallADoctor/5001CEMApril2024/CallADoctor/Model/registration.py"])    
 
 class LoginPage(tk.Frame):
     def __init__(self, parent):
@@ -24,12 +31,12 @@ class LoginPage(tk.Frame):
         self.label.grid(row=2, column=0, padx=20, pady=10, sticky="w") 
         # Register button
         self.register_button = tk.Button(self, text="Register Now!", command=self.register)
-        self.register_button.grid(row=2, column=0, padx=100, pady=10, sticky="w") 
-        # Logo
-        self.logo = tk.PhotoImage(file="C:/Users/woeil/OneDrive/Documents/CallADoctor/5001CEMApril2024/CallADoctor/Images/CallADoctor-logo.png")
-        self.logo = self.logo.subsample(2)  # Adjust the size of the logo image
+        self.register_button.grid(row=3, column=0, padx=100, sticky="w") 
+
+        self.logo = tk.PhotoImage(file=logoImageFile)
+        self.logo = self.logo.subsample(2)  
         self.logo_label = tk.Label(self, image=self.logo)
-        self.logo_label.grid(row=2, column=0, rowspan=11 ,padx=20 , sticky="w")
+        self.logo_label.grid(row=4, column=0, rowspan=11 ,padx=20 , sticky="w")
 
         # Left side End
 
@@ -83,6 +90,14 @@ class LoginPage(tk.Frame):
         selected_role = self.role_var.get()
         if selected_role == "Choose Role":
             messagebox.showerror("Error", "Please select a role")
+        if selected_role in ["Doctor", "Clinic Admin"]:
+            self.clinic_dropdown.config(state='readonly')
+            self.clinic_state_dropdown.config(state='readonly')
+        else:
+            self.clinic_dropdown.config(state='disabled') 
+            self.clinic_dropdown.current(0)
+            self.clinic_state_dropdown.config(state='disabled')  
+            self.clinic_state_dropdown.current(0)
 
     def check_clinic_selection(self, event):
         selected_clinic = self.clinic_var.get()
@@ -99,17 +114,16 @@ class LoginPage(tk.Frame):
         password = self.password_entry.get()
         role = self.role_var.get()
         clinic = self.clinic_var.get()
-        click_state = self.click_state_var.get()
+        click_state = self.clinic_state_var.get()
 
         try:
-            user = auth.sign_in_with_email_and_password(username, password)
+            user = auth.sign_in_with_email_and_password(username, password, role, clinic, click_state)
             # You can add code here to handle role, clinic, and click state
         except:
             messagebox.showerror("Error", "Invalid username or password")
 
     def register(self):
-        # Navigate to the registration page
-        pass
+        start_registration()
 
 # Main Execution
 if __name__ == "__main__":
