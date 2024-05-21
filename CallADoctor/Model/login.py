@@ -6,17 +6,16 @@ from firebase_admin import credentials, auth
 import os
 import subprocess
 from SharePath import start_registration
+
 # Create relative file paths
 dir = os.path.dirname(__file__)
-accountKeyFile = os.path.join(dir, '../calladoctor-serviceAccountKey.json')
-logoFile = os.path.join(dir, '../Images/CallADoctor-logo.png')
 
 # Initialize Firebase
-cred = credentials.Certificate(accountKeyFile) #Change the path to your own serviceAccountKey.json
+cred = credentials.Certificate(os.path.join(dir, '../calladoctor-serviceAccountKey.json')) 
 firebase = firebase_admin.initialize_app(cred)
 
 def start_registration():
-    subprocess.call(["python", "C:/Users/woeil/OneDrive/Documents/CallADoctor/5001CEMApril2024/CallADoctor/Model/registration.py"])    
+    subprocess.call(["python", os.path.join(dir, 'registration.py')])    
 
 class LoginPage(tk.Frame):
     def __init__(self, parent):
@@ -36,7 +35,7 @@ class LoginPage(tk.Frame):
         self.register_button = tk.Button(self, text="Register Now!", command=self.register)
         self.register_button.grid(row=3, column=0, padx=100, pady=10, sticky="w") 
         # Logo
-        self.logo = tk.PhotoImage(file=logoFile)
+        self.logo = tk.PhotoImage(file=os.path.join(dir, '../Images/CallADoctor-logo.png'))
         self.logo = self.logo.subsample(2)  # Adjust the size of the logo image
         self.logo_label = tk.Label(self, image=self.logo)
         self.logo_label.grid(row=4, column=0, rowspan=11 ,padx=20 , sticky="w")

@@ -3,17 +3,24 @@ from tkinter import ttk
 from tkinter import messagebox
 import firebase_admin
 from firebase_admin import credentials, auth
+import os
 import subprocess
 from SharePath import start_login
-serviceAccountKeyFile = "C:/Users/woeil/OneDrive/Documents/CallADoctor/5001CEMApril2024/CallADoctor/calladoctor-serviceAccountKey.json"   #Change the path to your own serviceAccountKey.json
-logoImageFile = "C:/Users/woeil/OneDrive/Documents/CallADoctor/5001CEMApril2024/CallADoctor/Images/CallADoctor-logo.png"  # Change the path to your own logo image
+
+# Create relative file paths
+dir = os.path.dirname(__file__)
+
+# os.path.join(dir, '../Images/CallADoctor-logo.png')
+
+serviceAccountKeyFile = os.path.join(dir, '../calladoctor-serviceAccountKey.json')   # Change the path to your own serviceAccountKey.json
+logoImageFile = os.path.join(dir, '../Images/CallADoctor-logo.png')  # Change the path to your own logo image
 
 # Initialize Firebase
 cred = credentials.Certificate(serviceAccountKeyFile)
 firebase = firebase_admin.initialize_app(cred)
 
 def start_login():
-    subprocess.call(["python", "C:/Users/woeil/OneDrive/Documents/CallADoctor/5001CEMApril2024/CallADoctor/Model/login.py"])
+    subprocess.call(["python", os.path.join(dir, 'login.py')])
 
 class RegistrationPage(tk.Frame):
     def __init__(self, parent):
