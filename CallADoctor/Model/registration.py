@@ -10,8 +10,6 @@ from SharePath import start_login
 # Create relative file paths
 dir = os.path.dirname(__file__)
 
-# os.path.join(dir, '../Images/CallADoctor-logo.png')
-
 serviceAccountKeyFile = os.path.join(dir, '../calladoctor-serviceAccountKey.json')   # Change the path to your own serviceAccountKey.json
 logoImageFile = os.path.join(dir, '../Images/CallADoctor-logo.png')  # Change the path to your own logo image
 
