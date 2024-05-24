@@ -155,7 +155,7 @@ class RegistrationPage(tk.Frame):
 
     def check_role_selection(self, event):
         selected_role = self.role_var.get()
-        if selected_role == "Choose Role":
+        if selected_role == "Choose Role" or selected_role == "":
             messagebox.showerror("Error", "Please select a role")
         if selected_role in ["Doctor", "Clinic Admin"]:
             self.clinic_state_dropdown.config(state='readonly')
@@ -183,19 +183,19 @@ class RegistrationPage(tk.Frame):
             self.clinic_name_entry.config(state="disabled")
             self.clinic_name_entry.delete(0, tk.END)
 
-    def check_clinic_selection(self, event=None):
+    def check_clinic_selection(self, event):
         selected_clinic = self.clinic_var.get()
-        if selected_clinic == "Choose Clinic":
+        if selected_clinic == "Choose Clinic" or selected_clinic == "":
             messagebox.showerror("Error", "Please select a clinic")
 
-    def check_clinic_state_selection(self, event=None):
+    def check_clinic_state_selection(self, event):
         selected_clinic_state = self.clinic_state_var.get()
-        if selected_clinic_state == "Choose Clinic State":
+        if selected_clinic_state == "Choose Clinic State" or selected_clinic_state == "":
             messagebox.showerror("Error", "Please select a clinic state")    
 
-    def check_specialist_selection(self, event=None):
+    def check_specialist_selection(self, event):
         selected_specialist = self.specialist_var.get()
-        if selected_specialist == "Choose Specialist":
+        if selected_specialist == "Choose Specialist" or selected_specialist == "":
             messagebox.showerror("Error", "Please select a specialist")        
 
     def ic_selected(self):
@@ -229,9 +229,18 @@ class RegistrationPage(tk.Frame):
         email = self.email_entry.get()
         password = self.password_entry.get()
         confirm_password = self.confirm_password_entry.get()
+        clinic = self.clinic_name_entry.get()
 
         if role == "Choose Role":
             messagebox.showerror("Error", "Role is required")
+            return
+        
+        if clinic == "Choose Clinic":
+            messagebox.showerror("Error", "Select a Clinic is required")
+            return
+        
+        if clinic_state == "Choose Clinic State":
+            messagebox.showerror("Error", "Select the Clinic State is required")
             return
         
         if ic_passport_id == "":

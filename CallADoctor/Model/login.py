@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-import firebase_admin
 from firebase_admin import credentials, initialize_app ,db
 import os
 import subprocess
