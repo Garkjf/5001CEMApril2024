@@ -9,3 +9,6 @@ def start_login():
 
 def start_registration():
     subprocess.call(["python", os.path.join(dir, "registration.py")])
+
+def start_patient():
+    subprocess.call(["python", os.path.join(dir, "Patient.py")])

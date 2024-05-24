@@ -41,100 +41,147 @@ class RegistrationPage(tk.Frame):
         self.logo = tk.PhotoImage(file=logoImageFile)
         self.logo = self.logo.subsample(2)
         self.logo_label = tk.Label(self, image=self.logo)
-        self.logo_label.grid(row=4, column=0, rowspan=11 ,padx=20 , sticky="w")
-
+        self.logo_label.grid(row=5, column=0, rowspan=11 ,padx=20 , sticky="w")
         # Left side End
 
         # Right Side
         # Role selection
         self.role_var = tk.StringVar()
         self.label = tk.Label(self, text="Select Role", bg="#9AB892")
-        self.label.grid(row=1, column=2, padx=20, sticky="w") 
+        self.label.grid(row=1, column=1, padx=20, sticky="w") 
         role_options = ["Choose Role", "Patient", "Doctor", "Clinic Admin"]
         self.role_dropdown = ttk.Combobox(self, textvariable=self.role_var, values=role_options, state="readonly")
         self.role_dropdown.current(0)  # Set the default value to "Choose Role"
-        self.role_dropdown.grid(row=2, column=2, padx=20, pady=10, sticky="w") 
+        self.role_dropdown.grid(row=2, column=1, padx=20, pady=10, sticky="w") 
         self.role_dropdown.bind("<<ComboboxSelected>>", self.check_role_selection)
 
+        # Get a reference to the clinics node in the database
+        clinics_ref = db.reference('clinicAdmins')
+
+        # Retrieve the clinic data
+        clinics = clinics_ref.get()
         # Clinic selection
+        clinic_options = ["Choose Clinic"]
+        clinic_names = set()
+        
+        for clinic_id, clinic_data in clinics.items():
+            clinic_name = clinic_data.get('clinic_name')
+            if clinic_name not in clinic_names:
+                clinic_options.append(clinic_name)
+                clinic_names.add(clinic_name)
+
         self.clinic_var = tk.StringVar()
         self.label = tk.Label(self, text="Select Clinic", bg="#9AB892")
-        self.label.grid(row=3, column=2, padx=20, sticky="w") 
-        clinic_options = ["Choose Clinic", "Bagan Ajam", "Bagan Specialist", "Sunway Hospital"]
+        self.label.grid(row=3, column=1, padx=20, sticky="w")
         self.clinic_dropdown = ttk.Combobox(self, textvariable=self.clinic_var, values=clinic_options, state="readonly")
         self.clinic_dropdown.current(0)  # Set the default value to "Choose Clinic"
-        self.clinic_dropdown.grid(row=4, column=2, padx=20, pady=10, sticky="w")  
+        self.clinic_dropdown.grid(row=4, column=1, padx=20, pady=10, sticky="w")
         self.clinic_dropdown.bind("<<ComboboxSelected>>", self.check_clinic_selection)
 
         # Clinic state Selection
         self.clinic_state_var = tk.StringVar()
         self.label = tk.Label(self, text="Select Clinic State", bg="#9AB892")
-        self.label.grid(row=5, column=2, padx=20, sticky="w")  # Changed column to 1
-        clinic_state_options = ["Choose Clinic State", "Penang", "Kuala Lumpur", "Johor"]
+        self.label.grid(row=5, column=1, padx=20, sticky="w")  # Changed column to 0
+        clinic_state_options = ["Choose Clinic State", "Johor", "Kedah", "Kelantan", "Melaka", "Negeri Sembilan", "Pahang", "Perak", "Perlis", "Pulau Pinang", "Sabah", "Sarawak", "Selangor", "Terengganu", "Kuala Lumpur", "Labuan", "Putrajaya"]
         self.clinic_state_dropdown = ttk.Combobox(self, textvariable=self.clinic_state_var, values=clinic_state_options, state="readonly")
         self.clinic_state_dropdown.current(0)  # Set the default value to "Choose Clinic State"
-        self.clinic_state_dropdown.grid(row=6, column=2, padx=20, pady=10, sticky="w") 
+        self.clinic_state_dropdown.grid(row=6, column=1, padx=20, pady=10, sticky="w") 
         self.clinic_state_dropdown.bind("<<ComboboxSelected>>", self.check_clinic_state_selection)
 
-        # IC / Passport ID
-        self.label = tk.Label(self, text="IC / Passport ID", bg="#9AB892")
-        self.label.grid(row=7, column=2, padx=20, sticky="w")
-        self.ic_passport_id_entry = tk.Entry(self)
-        self.ic_passport_id_entry.grid(row=8, column=2, padx=20, pady=10, sticky="w")
+        # Doctor Specialist Selection
+        self.specialist_var = tk.StringVar()
+        self.label = tk.Label(self, text="Select Specialist", bg="#9AB892")
+        self.label.grid(row=7, column=1, padx=20, sticky="w")  # Changed column to 0
+        specialist_options = ["Choose Specialist", "Cardiology", "Dermatology", "Endocrinology", "Gastroenterology", "Neurology", "Oncology", "Pediatrics", "Psychiatry", "Radiology", "Urology"]
+        self.specialist_dropdown = ttk.Combobox(self, textvariable=self.specialist_var, values=specialist_options, state="readonly")
+        self.specialist_dropdown.current(0)  # Set the default value to "Choose Specialist"
+        self.specialist_dropdown.grid(row=8, column=1, padx=20, pady=10, sticky="w") 
+        self.specialist_dropdown.bind("<<ComboboxSelected>>", self.check_specialist_selection)
 
         # Radio buttons for IC and Passport selection
         self.id_type_var = tk.StringVar()
         self.label = tk.Label(self, text="ID Type", bg="#9AB892")
-        self.label.grid(row=9, column=2, padx=20, sticky="w")
+        self.label.grid(row=9, column=1, padx=20, sticky="w")
         self.ic_radio = tk.Radiobutton(self, text="IC", variable=self.id_type_var, value="IC", command=self.ic_selected)
-        self.ic_radio.grid(row=10, column=2, padx=20, pady=5, sticky="w")
+        self.ic_radio.grid(row=10, column=1, padx=20, pady=5, sticky="w")
         self.passport_radio = tk.Radiobutton(self, text="Passport", variable=self.id_type_var, value="Passport", command=self.passport_selected)
-        self.passport_radio.grid(row=11, column=2, padx=20, pady=5, sticky="w")
-
+        self.passport_radio.grid(row=11, column=1, padx=20, pady=5, sticky="w")
+        
+        # IC / Passport ID
+        self.label = tk.Label(self, text="IC / Passport ID", bg="#9AB892")
+        self.label.grid(row=12, column=1, padx=20, sticky="w")
+        self.ic_passport_id_entry = tk.Entry(self)
+        self.ic_passport_id_entry.grid(row=13, column=1, padx=20, pady=10, sticky="w")
+        
         # Select IC by default
         self.ic_radio.select()
 
+        #  Clinic name entry
+        self.clinic_var = tk.StringVar()
+        self.label = tk.Label(self, text="Enter Clinic Name", bg="#9AB892")
+        self.label.grid(row=1, column=2, padx=20, sticky="w") 
+        self.clinic_name_entry = tk.Entry(self)
+        self.clinic_name_entry.grid(row=2, column=2, padx=20, pady=10, sticky="w")
+        self.clinic_name_entry.config(state="disabled")  # Disable the entry by default
+
         # Username 
         self.label = tk.Label(self, text="Username", bg="#9AB892")
-        self.label.grid(row=1, column=3, padx=20, sticky="w")
+        self.label.grid(row=3, column=2, padx=20, sticky="w")
         self.username_entry = tk.Entry(self)
-        self.username_entry.grid(row=2, column=3, padx=20, pady=10, sticky="w")
+        self.username_entry.grid(row=4, column=2, padx=20, pady=10, sticky="w")
         
         #  Email
         self.label = tk.Label(self, text="Email", bg="#9AB892")
-        self.label.grid(row=3, column=3, padx=20, sticky="w") 
+        self.label.grid(row=5, column=2, padx=20, sticky="w") 
         self.email_entry = tk.Entry(self)
-        self.email_entry.grid(row=4, column=3, padx=20, pady=10, sticky="w") 
+        self.email_entry.grid(row=6, column=2, padx=20, pady=10, sticky="w") 
 
         # Password
         self.label = tk.Label(self, text="Password", bg="#9AB892")
-        self.label.grid(row=5, column=3, padx=20, sticky="w") 
+        self.label.grid(row=7, column=2, padx=20, sticky="w") 
         self.password_entry = tk.Entry(self, show="*")
-        self.password_entry.grid(row=6, column=3, padx=20, pady=10, sticky="w") 
+        self.password_entry.grid(row=8, column=2, padx=20, pady=10, sticky="w") 
 
         # confirm password
         self.label = tk.Label(self, text="Confirm Password", bg="#9AB892")
-        self.label.grid(row=7, column=3, padx=20, sticky="w")
+        self.label.grid(row=9, column=2, padx=20, sticky="w")
         self.confirm_password_entry = tk.Entry(self, show="*")
-        self.confirm_password_entry.grid(row=8, column=3, padx=20, pady=10, sticky="w") 
+        self.confirm_password_entry.grid(row=10, column=2, padx=20, pady=10, sticky="w") 
 
         # Submit button
         self.submit_button = tk.Button(self, text="Submit", bg="#0275DD", fg="#ffffff", command=self.submit)
-        self.submit_button.grid(row=10, column=3, padx=20, pady=10, sticky="w") 
+        self.submit_button.grid(row=13, column=2, padx=20, pady=10, sticky="w") 
         # Right Side End
 
-    def check_role_selection(self, event=None):
+    def check_role_selection(self, event):
         selected_role = self.role_var.get()
         if selected_role == "Choose Role":
             messagebox.showerror("Error", "Please select a role")
         if selected_role in ["Doctor", "Clinic Admin"]:
-            self.clinic_dropdown.config(state='readonly')
             self.clinic_state_dropdown.config(state='readonly')
+            
+            if selected_role == "Doctor":
+                self.clinic_dropdown.config(state='readonly')
+                self.specialist_dropdown.config(state='readonly')
+                self.clinic_name_entry.config(state="disabled")
+                self.clinic_name_entry.delete(0, tk.END)
+
+            if selected_role == "Clinic Admin":
+                self.clinic_dropdown.config(state='disabled') 
+                self.clinic_dropdown.current(0)
+                self.specialist_dropdown.config(state='disabled')
+                self.specialist_dropdown.current(0)
+                self.clinic_name_entry.config(state="normal")
+
         else:
             self.clinic_dropdown.config(state='disabled') 
             self.clinic_dropdown.current(0)
             self.clinic_state_dropdown.config(state='disabled')  
-            self.clinic_state_dropdown.current(0)   
+            self.clinic_state_dropdown.current(0)
+            self.specialist_dropdown.config(state='disabled')
+            self.specialist_dropdown.current(0)
+            self.clinic_name_entry.config(state="disabled")
+            self.clinic_name_entry.delete(0, tk.END)
 
     def check_clinic_selection(self, event=None):
         selected_clinic = self.clinic_var.get()
@@ -145,6 +192,11 @@ class RegistrationPage(tk.Frame):
         selected_clinic_state = self.clinic_state_var.get()
         if selected_clinic_state == "Choose Clinic State":
             messagebox.showerror("Error", "Please select a clinic state")    
+
+    def check_specialist_selection(self, event=None):
+        selected_specialist = self.specialist_var.get()
+        if selected_specialist == "Choose Specialist":
+            messagebox.showerror("Error", "Please select a specialist")        
 
     def ic_selected(self):
             self.ic_passport_id_entry.config(validate="key")
@@ -162,7 +214,7 @@ class RegistrationPage(tk.Frame):
         return
 
     def validate_passport(self, value):
-        if len(value) < 8 or len(value) > 9:
+        if len(value) >= 8 and len(value) <= 9:
             return True
         else:
             messagebox.showerror("Error", "Passport ID must be 8-9 characters")
