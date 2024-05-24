@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 import firebase_admin
-from firebase_admin import credentials, auth
+from firebase_admin import credentials,initialize_app, db
 import os
 import subprocess
 from SharePath import start_login
@@ -15,7 +15,7 @@ logoImageFile = os.path.join(dir, '../Images/CallADoctor-logo.png')  # Change th
 
 # Initialize Firebase
 cred = credentials.Certificate(serviceAccountKeyFile)
-firebase = firebase_admin.initialize_app(cred)
+initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
 
 def start_login():
     subprocess.call(["python", os.path.join(dir, 'login.py')])
@@ -76,6 +76,24 @@ class RegistrationPage(tk.Frame):
         self.clinic_state_dropdown.grid(row=6, column=2, padx=20, pady=10, sticky="w") 
         self.clinic_state_dropdown.bind("<<ComboboxSelected>>", self.check_clinic_state_selection)
 
+        # IC / Passport ID
+        self.label = tk.Label(self, text="IC / Passport ID", bg="#9AB892")
+        self.label.grid(row=7, column=2, padx=20, sticky="w")
+        self.ic_passport_id_entry = tk.Entry(self)
+        self.ic_passport_id_entry.grid(row=8, column=2, padx=20, pady=10, sticky="w")
+
+        # Radio buttons for IC and Passport selection
+        self.id_type_var = tk.StringVar()
+        self.label = tk.Label(self, text="ID Type", bg="#9AB892")
+        self.label.grid(row=9, column=2, padx=20, sticky="w")
+        self.ic_radio = tk.Radiobutton(self, text="IC", variable=self.id_type_var, value="IC", command=self.ic_selected)
+        self.ic_radio.grid(row=10, column=2, padx=20, pady=5, sticky="w")
+        self.passport_radio = tk.Radiobutton(self, text="Passport", variable=self.id_type_var, value="Passport", command=self.passport_selected)
+        self.passport_radio.grid(row=11, column=2, padx=20, pady=5, sticky="w")
+
+        # Select IC by default
+        self.ic_radio.select()
+
         # Username 
         self.label = tk.Label(self, text="Username", bg="#9AB892")
         self.label.grid(row=1, column=3, padx=20, sticky="w")
@@ -85,8 +103,8 @@ class RegistrationPage(tk.Frame):
         #  Email
         self.label = tk.Label(self, text="Email", bg="#9AB892")
         self.label.grid(row=3, column=3, padx=20, sticky="w") 
-        self.emai_entry = tk.Entry(self)
-        self.emai_entry.grid(row=4, column=3, padx=20, pady=10, sticky="w") 
+        self.email_entry = tk.Entry(self)
+        self.email_entry.grid(row=4, column=3, padx=20, pady=10, sticky="w") 
 
         # Password
         self.label = tk.Label(self, text="Password", bg="#9AB892")
@@ -97,15 +115,15 @@ class RegistrationPage(tk.Frame):
         # confirm password
         self.label = tk.Label(self, text="Confirm Password", bg="#9AB892")
         self.label.grid(row=7, column=3, padx=20, sticky="w")
-        self.password_entry = tk.Entry(self, show="*")
-        self.password_entry.grid(row=8, column=3, padx=20, pady=10, sticky="w") 
+        self.confirm_password_entry = tk.Entry(self, show="*")
+        self.confirm_password_entry.grid(row=8, column=3, padx=20, pady=10, sticky="w") 
 
         # Submit button
         self.submit_button = tk.Button(self, text="Submit", bg="#0275DD", fg="#ffffff", command=self.submit)
         self.submit_button.grid(row=10, column=3, padx=20, pady=10, sticky="w") 
         # Right Side End
 
-    def check_role_selection(self, event):
+    def check_role_selection(self, event=None):
         selected_role = self.role_var.get()
         if selected_role == "Choose Role":
             messagebox.showerror("Error", "Please select a role")
@@ -118,29 +136,132 @@ class RegistrationPage(tk.Frame):
             self.clinic_state_dropdown.config(state='disabled')  
             self.clinic_state_dropdown.current(0)   
 
-    def check_clinic_selection(self, event):
+    def check_clinic_selection(self, event=None):
         selected_clinic = self.clinic_var.get()
         if selected_clinic == "Choose Clinic":
             messagebox.showerror("Error", "Please select a clinic")
 
-    def check_clinic_state_selection(self, event):
+    def check_clinic_state_selection(self, event=None):
         selected_clinic_state = self.clinic_state_var.get()
         if selected_clinic_state == "Choose Clinic State":
             messagebox.showerror("Error", "Please select a clinic state")    
 
+    def ic_selected(self):
+            self.ic_passport_id_entry.config(validate="key")
+            self.ic_passport_id_entry.config(validatecommand=(self.ic_passport_id_entry.register(self.validate_ic), "%P"))
+
+    def passport_selected(self):
+        self.ic_passport_id_entry.config(validate="key")
+        self.ic_passport_id_entry.config(validatecommand=(self.ic_passport_id_entry.register(self.validate_passport), "%P"))
+
+    def validate_ic(self, value):
+        if value.isdigit() and len(value) == 12:
+            return True
+        else: 
+            messagebox.showerror("Error", "IC ID must be 12 digits")
+        return
+
+    def validate_passport(self, value):
+        if len(value) < 8 or len(value) > 9:
+            return True
+        else:
+            messagebox.showerror("Error", "Passport ID must be 8-9 characters")
+        return  
+
     def submit(self):
-        username = self.username_entry.get()
-        password = self.password_entry.get()
         role = self.role_var.get()
         clinic = self.clinic_var.get()
-        click_state = self.clinic_state_var.get()
+        clinic_state = self.clinic_state_var.get()
+        ic_passport_id = self.ic_passport_id_entry.get()
+        username = self.username_entry.get()
+        email = self.email_entry.get()
+        password = self.password_entry.get()
+        confirm_password = self.confirm_password_entry.get()
+
+        if role == "Choose Role":
+            messagebox.showerror("Error", "Role is required")
+            return
+        
+        if ic_passport_id == "":
+            messagebox.showerror("Error", "IC/Passport ID is required")
+            return
+        
+        if username == "":
+            messagebox.showerror("Error", "Username is required")
+            return
+        
+        if email == "":
+            messagebox.showerror("Error", "Email is required")
+            return
+        
+        if password == "":  
+            messagebox.showerror("Error", "Password is required")
+            return
+        
+        if confirm_password == "":
+            messagebox.showerror("Error", "Confirm Password is required")
+            return
+        
+        if password != confirm_password:
+            messagebox.showerror("Error", "Passwords do not match")
+            return
 
         try:
-            user = auth.sign_in_with_email_and_password(username, password, role, clinic, click_state)
-            # You can add code here to handle role, clinic, and click state
-        except:
-            messagebox.showerror("Error", "Invalid username or password")
+            # Check if IC/Passport ID already exists
+            ref = db.reference(role.lower() + 's')
+            if ref.child(ic_passport_id).get() is not None:
+                messagebox.showerror("Error", "IC/Passport ID already exists")
+                return
+            
+            if role == 'Patient':
+                self.save_patient(role, ic_passport_id, username, email, password)
+                messagebox.showinfo("Success", "Patient registration successful")
+            elif role == 'Doctor':
+                self.save_doctor(role, clinic, clinic_state, ic_passport_id, username, email, password)
+                messagebox.showinfo("Success", "Your Doctor registration information is sending for approval")
+            elif role == 'Clinic Admin':
+                self.save_clinic_admin(role, clinic, clinic_state, ic_passport_id, username, email, password)
+                messagebox.showinfo("Success", "Your Clinic Admin registration information is sending for approval")
+            else:
+                messagebox.showerror("Error", "Invalid role selected")
+        except Exception as e:
+            print(e)
+            messagebox.showerror("Error", e)
 
+    def save_patient(self, role, ic_passport_id, username, email, password):
+        ref = db.reference('patients')
+        ref.child(ic_passport_id).set({
+            'role': role,
+            'ic_passport_id': ic_passport_id,
+            'username': username,
+            'email': email,
+            'password': password
+        })
+
+    def save_clinic_admin(self, role, clinic_name, clinic_state, ic_passport_id, username, email, password):
+        ref = db.reference('clinicAdmins')
+        ref.child(ic_passport_id).set({
+            'role': role,
+            'clinic_name': clinic_name,
+            'clinic_state': clinic_state,
+            'ic_passport_id': ic_passport_id,
+            'username': username,
+            'email': email,
+            'password': password
+        })
+
+    def save_doctor(self, role, clinic_name, clinic_state, ic_passport_id, username, email, password):
+        ref = db.reference('doctors')
+        ref.child(ic_passport_id).set({
+            'role': role,
+            'clinic_name': clinic_name,
+            'clinic_state': clinic_state,
+            'ic_passport_id': ic_passport_id,
+            'username': username,
+            'email': email,
+            'password': password
+        })        
+    
     def login(self):
         start_login()
 
