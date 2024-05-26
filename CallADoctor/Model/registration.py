@@ -63,13 +63,21 @@ class RegistrationPage(tk.Frame):
         # Clinic selection
         clinic_options = ["Choose Clinic"]
         clinic_names = set()
+
+        # Clinic State Selection
+        clinic_state_options = ["Choose Clinic State"]
+        clinic_states = set()
         
         for clinic_id, clinic_data in clinics.items():
             clinic_name = clinic_data.get('clinic_name')
+            clinic_state = clinic_data.get('clinic_state')
             if clinic_name not in clinic_names:
                 clinic_options.append(clinic_name)
                 clinic_names.add(clinic_name)
-
+            if clinic_state not in clinic_states:
+                clinic_state_options.append(clinic_state)
+                clinic_states.add(clinic_state)
+                
         self.clinic_var = tk.StringVar()
         self.label = tk.Label(self, text="Select Clinic", bg="#9AB892")
         self.label.grid(row=3, column=1, padx=20, sticky="w")
@@ -82,7 +90,6 @@ class RegistrationPage(tk.Frame):
         self.clinic_state_var = tk.StringVar()
         self.label = tk.Label(self, text="Select Clinic State", bg="#9AB892")
         self.label.grid(row=5, column=1, padx=20, sticky="w")  # Changed column to 0
-        clinic_state_options = ["Choose Clinic State", "Johor", "Kedah", "Kelantan", "Melaka", "Negeri Sembilan", "Pahang", "Perak", "Perlis", "Pulau Pinang", "Sabah", "Sarawak", "Selangor", "Terengganu", "Kuala Lumpur", "Labuan", "Putrajaya"]
         self.clinic_state_dropdown = ttk.Combobox(self, textvariable=self.clinic_state_var, values=clinic_state_options, state="readonly")
         self.clinic_state_dropdown.current(0)  # Set the default value to "Choose Clinic State"
         self.clinic_state_dropdown.grid(row=6, column=1, padx=20, pady=10, sticky="w") 
@@ -117,7 +124,6 @@ class RegistrationPage(tk.Frame):
         self.ic_radio.select()
 
         #  Clinic name entry
-        self.clinic_var = tk.StringVar()
         self.label = tk.Label(self, text="Enter Clinic Name", bg="#9AB892")
         self.label.grid(row=1, column=2, padx=20, sticky="w") 
         self.clinic_name_entry = tk.Entry(self)
@@ -185,17 +191,17 @@ class RegistrationPage(tk.Frame):
 
     def check_clinic_selection(self, event):
         selected_clinic = self.clinic_var.get()
-        if selected_clinic == "Choose Clinic" or selected_clinic == "":
+        if selected_clinic == "Choose Clinic":
             messagebox.showerror("Error", "Please select a clinic")
 
     def check_clinic_state_selection(self, event):
         selected_clinic_state = self.clinic_state_var.get()
-        if selected_clinic_state == "Choose Clinic State" or selected_clinic_state == "":
+        if selected_clinic_state == "Choose Clinic State":
             messagebox.showerror("Error", "Please select a clinic state")    
 
     def check_specialist_selection(self, event):
         selected_specialist = self.specialist_var.get()
-        if selected_specialist == "Choose Specialist" or selected_specialist == "":
+        if selected_specialist == "Choose Specialist":
             messagebox.showerror("Error", "Please select a specialist")        
 
     def ic_selected(self):
@@ -229,13 +235,13 @@ class RegistrationPage(tk.Frame):
         email = self.email_entry.get()
         password = self.password_entry.get()
         confirm_password = self.confirm_password_entry.get()
-        clinic = self.clinic_name_entry.get()
+        specialist = self.specialist_var.get()
 
         if role == "Choose Role":
             messagebox.showerror("Error", "Role is required")
             return
         
-        if clinic == "Choose Clinic":
+        if clinic == "Choose Clinic" and role != "Clinic Admin":
             messagebox.showerror("Error", "Select a Clinic is required")
             return
         
@@ -266,6 +272,10 @@ class RegistrationPage(tk.Frame):
         if password != confirm_password:
             messagebox.showerror("Error", "Passwords do not match")
             return
+        
+        if role == "Doctor" and specialist == "Choose Specialist":
+            messagebox.showerror("Error", "Specialist is required")
+            return
 
         try:
             # Check if IC/Passport ID already exists
@@ -278,7 +288,7 @@ class RegistrationPage(tk.Frame):
                 self.save_patient(role, ic_passport_id, username, email, password)
                 messagebox.showinfo("Success", "Patient registration successful")
             elif role == 'Doctor':
-                self.save_doctor(role, clinic, clinic_state, ic_passport_id, username, email, password)
+                self.save_doctor(role, clinic, clinic_state, ic_passport_id, username, email, password, specialist)
                 messagebox.showinfo("Success", "Your Doctor registration information is sending for approval")
             elif role == 'Clinic Admin':
                 self.save_clinic_admin(role, clinic, clinic_state, ic_passport_id, username, email, password)
@@ -300,6 +310,9 @@ class RegistrationPage(tk.Frame):
         })
 
     def save_clinic_admin(self, role, clinic_name, clinic_state, ic_passport_id, username, email, password):
+        if clinic_name == "" or clinic_name == "Choose Clinic":
+            clinic_name = self.clinic_name_entry.get()
+        
         ref = db.reference('clinicAdmins')
         ref.child(ic_passport_id).set({
             'role': role,
@@ -311,7 +324,10 @@ class RegistrationPage(tk.Frame):
             'password': password
         })
 
-    def save_doctor(self, role, clinic_name, clinic_state, ic_passport_id, username, email, password):
+    def save_doctor(self, role, clinic_name, clinic_state, ic_passport_id, username, email, password, specialist):
+        if clinic_name == "":
+            clinic_name = self.clinic_name_entry.get()
+
         ref = db.reference('doctors')
         ref.child(ic_passport_id).set({
             'role': role,
@@ -320,7 +336,8 @@ class RegistrationPage(tk.Frame):
             'ic_passport_id': ic_passport_id,
             'username': username,
             'email': email,
-            'password': password
+            'password': password,
+            'specialist': specialist
         })        
     
     def login(self):
