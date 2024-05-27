@@ -11,11 +11,15 @@ class DoctorPage(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent, bg="#F6F6E9")
 
-        # Header
-        self.logo = Image.open(os.path.join(dir, '../Images/CallADoctor-logo.png'))
-        self.logo = ImageTk.PhotoImage(self.logo.resize((130, 130)))
-        logo_label = tk.Label(self, image=self.logo, bg="#F6F6E9")
-        logo_label.grid(row=0, column=0, rowspan=2, sticky="w")
+        # navigation bar
+        nav_bar = tk.Frame(bg="#6B9778")
+        nav_bar.pack()
+
+        search_clinics_btn = tk.Button(nav_bar, text="Search Patients")
+        search_clinics_btn.pack(side="left")
+
+        make_appointment_btn = tk.Button(nav_bar, text="Assigned Request")
+        make_appointment_btn.pack(side="left")
 
         bold14 = Font(self.master, size=14, weight=BOLD) 
         label = tk.Label(self, text="Search For Patient", bg="#F6F6E9", font=bold14)
