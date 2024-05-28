@@ -71,6 +71,12 @@ class Patient(tk.Frame):
         submit_button = tk.Button(self, text="Search", bg="#0275DD", fg="#ffffff", command=self.displayClinicInfo)
         submit_button.pack(pady=(10), padx=(10), anchor="w")
 
+        # initialize the total clinic found label
+        self.total_label = tk.Label(self, text="Total clinics found: 0")
+        self.total_label.pack(pady=(5), padx=(10), anchor="w")
+
+        self.displayClinicInfo()
+
     def displayClinicInfo(self):
         # Clear the clinic information
         self.clearClinicInfo()
@@ -119,7 +125,7 @@ class Patient(tk.Frame):
                 state_label = tk.Label(clinic_frame, text=f"Clinic State: {clinic_state}")
                 state_label.pack()
 
-                view_more_button = tk.Button(clinic_frame, text="View More",bg="#0275DD", fg="#ffffff", command=lambda clinic_id=clinic_id, clinic_name=clinic_name, clinic_state=clinic_state : self.viewDoctorList(clinic_id, clinic_name, clinic_state))
+                view_more_button = tk.Button(clinic_frame, text="View More",bg="#0275DD", fg="#ffffff", command=lambda clinic_id=clinic_id, clinic_name=clinic_name, clinic_state=clinic_state : self.doctorListFilter(clinic_id, clinic_name, clinic_state))
                 view_more_button.pack()
 
                 count += 1
@@ -128,14 +134,14 @@ class Patient(tk.Frame):
                 row = tk.Frame(self, bg="#9AB892")
                 row.pack()
 
+        # Update the total number of clinics found
+        self.total_label.config(text=f"Total clinics found: {count}")        
+
     def clearClinicInfo(self):
         # Clear the clinic information
         for widget in self.winfo_children():
             if isinstance(widget, tk.Frame):
                 widget.destroy()
-
-    def sendRequest(self):
-        pass      
     
     def clearFilters(self):
         # Clear the filters and search button from the searchClinic function/ ViewDoctorList function
@@ -143,26 +149,25 @@ class Patient(tk.Frame):
             if isinstance(widget, ttk.Combobox) or isinstance(widget, tk.Label) or isinstance(widget, tk.Button):
                 widget.destroy()
 
-    def viewDoctorList(self, clinic_id, clinic_name, clinic_state):
-        # Clear the clinic information
+    def doctorListFilter(self, clinic_id, selected_clinic, selected_state):
         self.clearClinicInfo()
         self.clearFilters()
-        print("viewDoctorList called")  # Debugging print statement
+        print("doctorListFilter called")
 
-        # Start Filter Part - Filter by Doctor Specialty
+         # Start Filter Part - Filter by Doctor Specialty
         bold14 = Font(self.master, size=14, weight=BOLD) 
         bold10 = Font(self.master, size=10, weight=BOLD) 
-        label = tk.Label(self, text="Search For Doctors", bg="#F6F6E9", font=bold14)
+        label = tk.Label(self, text=f"Search For {selected_clinic} - {selected_state} Doctors", bg="#F6F6E9", font=bold14)
         label.pack(padx=20, pady=(10, 0), anchor="w")
 
         # Load the back icon
         back_icon = tk.PhotoImage(file=backIconImage)
-        back_icon = back_icon.subsample(9, 9)
+        back_icon = back_icon.subsample(20, 20)
 
         # Back button
         back_button = tk.Button(self, image=back_icon, command=self.searchClinic)
         back_button.image = back_icon  # Keep a reference to the image to prevent it from being garbage collected
-        back_button.pack(pady=(10), padx=(300), anchor="w")
+        back_button.pack(pady=(5), padx=(320), anchor="w")
 
         # Get a reference to the doctors node in the database
         docotrs_ref = db.reference('doctors')
@@ -174,11 +179,116 @@ class Patient(tk.Frame):
         doctor_specialty_options = ["All Specialty"]
         doctor_specialties = set()
 
-        for doctor_id, doctor_specialty_data in doctors.items():
-            specialty = doctor_specialty_data.get('specialty')
-            if specialty not in doctor_specialties:
-                doctor_specialty_options.append(specialty)
-                doctor_specialties.add(specialty)
+        for doctor_id, doctor_data in doctors.items():
+            specialist = doctor_data.get('specialist')
+            if doctor_data.get('clinic_state')  == selected_state and doctor_data.get('clinic_name') == selected_clinic:
+                if specialist not in doctor_specialties:
+                    doctor_specialty_options.append(specialist)
+                    doctor_specialties.add(specialist)
+
+        # Doctor Specialty Selection
+        self.doctor_specialty_var = tk.StringVar()
+        self.label = tk.Label(self, text="Filter by Doctor Specialty", bg="#9AB892", font=bold10)
+        self.label.pack(pady=(10), padx=(10), anchor="w")  
+        self.clinic_state_dropdown = ttk.Combobox(self, textvariable=self.doctor_specialty_var, values=doctor_specialty_options, state="readonly")
+        self.clinic_state_dropdown.current(0)  # Set the default value to "All specialty"
+        self.clinic_state_dropdown.pack(pady=(10), padx=(10), anchor="w") 
+
+        submit_button = tk.Button(self, text="Search", bg="#0275DD", fg="#ffffff", command=lambda: self.viewDoctorList(clinic_id, selected_clinic, selected_state, self.doctor_specialty_var.get()))
+        submit_button.pack(pady=(10), padx=(10), anchor="w")
+        # End Filter Part - Filter by Doctor Specialty
+
+        # initialize the total doctor found label
+        self.total_label = tk.Label(self, text="Total doctor found: 0")
+        self.total_label.pack(padx=(10), anchor="w")
+
+        self.viewDoctorList(clinic_id, selected_clinic, selected_state, self.doctor_specialty_var.get())
+
+    def viewDoctorList(self, clinic_id, selected_clinic, selected_state, selected_specialty):
+        # Clear the clinic information
+        self.clearClinicInfo()
+        print("viewDoctorList called")  # Debugging print statement
+
+        # Get the selected clinic state and clinic name
+        print(f"Selected state: {selected_state}, Selected clinic: {selected_clinic}")  # Debugging print statement
+
+        # Get a reference to the doctors node in the database
+        doctors_ref = db.reference('doctors')
+
+        # Retrieve the doctors data
+        doctors = doctors_ref.get()
+        print(f"doctors: {doctors}") # Debugging print statement
+
+        # Display the clinic information
+        count = 0
+        row = tk.Frame(self, bg="#9AB892")
+        row.pack()
+        
+        # Display the related doctors
+        for doctor_id, doctor_data in doctors.items():
+            if doctor_data.get('clinic_state')  == selected_state and doctor_data.get('clinic_name') == selected_clinic and (doctor_data.get('specialist') == selected_specialty or selected_specialty == "All Specialty"):
+                print(f"Match found for doctor {doctor_id}")  # Debugging print statement
+
+                clinic_frame = tk.Frame(row, borderwidth=2, relief="groove", width=300, height=100)
+                clinic_frame.pack(side="left", padx=10, pady=30)
+
+                doctor_name = doctor_data.get('username')
+                doctor_specialty = doctor_data.get('specialist')
+
+                doctor_label = tk.Label(clinic_frame, text=f"Doctor: {doctor_name}")
+                doctor_label.pack()
+
+                specialty_label = tk.Label(clinic_frame, text=f"Specialty: {doctor_specialty}")
+                specialty_label.pack()
+
+                view_more_button = tk.Button(clinic_frame, text="View More", bg="#0275DD", fg="#ffffff", command=lambda clinic_id=doctor_id: self.viewDoctor(doctor_id, selected_clinic, selected_state))
+                view_more_button.pack()
+
+                count += 1
+
+            if count % 4 == 0:
+                row = tk.Frame(self, bg="#9AB892")
+                row.pack()
+
+        # Update the total number of doctor found
+        self.total_label.config(text=f"Total doctors found: {count}")   
+
+    def viewDoctorInformation(self, doctor_id):          
+        # Clear the doctor information
+        self.viewDoctorList()
+        self.clearFilters()
+        print("viewDoctorInformation called")  # Debugging print statement
+
+        # Start Filter Part - Filter by Doctor Specialty
+        bold14 = Font(self.master, size=14, weight=BOLD) 
+        bold10 = Font(self.master, size=10, weight=BOLD) 
+        label = tk.Label(self, text=f"Search For {selected_clinic} {selected_state} Doctors", bg="#F6F6E9", font=bold14)
+        label.pack(padx=20, pady=(10, 0), anchor="w")
+
+        # Load the back icon
+        back_icon = tk.PhotoImage(file=backIconImage)
+        back_icon = back_icon.subsample(15, 15)
+
+        # Back button
+        back_button = tk.Button(self, image=back_icon, command=self.searchClinic)
+        back_button.image = back_icon  # Keep a reference to the image to prevent it from being garbage collected
+        back_button.pack(padx=(300), anchor="w")
+
+        # Get a reference to the doctors node in the database
+        docotrs_ref = db.reference('doctors')
+
+        # Retrieve the clinic data
+        doctors = docotrs_ref.get()
+
+        # Doctor selection
+        doctor_specialty_options = ["All Specialty"]
+        doctor_specialties = set()
+
+        for doctor_id, doctor_data in doctors.items():
+            specialist = doctor_data.get('specialist')
+            if specialist not in doctor_specialties:
+                doctor_specialty_options.append(specialist)
+                doctor_specialties.add(specialist)
            
         # Doctor Specialty Selection
         self.doctor_specialty_var = tk.StringVar()
@@ -192,9 +302,13 @@ class Patient(tk.Frame):
         submit_button.pack(pady=(10), padx=(10), anchor="w")
         # End Filter Part - Filter by Doctor Specialty
 
+        # initialize the total doctor found label
+        self.total_label = tk.Label(self, text="Total doctor found: 0")
+        self.total_label.pack(pady=(5), padx=(10), anchor="w")
+
         # Get the selected clinic state and clinic name
-        selected_state = clinic_state
-        selected_clinic = clinic_name
+        # selected_state = clinic_state
+        # selected_clinic = clinic_name
         print(f"Selected state: {selected_state}, Selected clinic: {selected_clinic}")  # Debugging print statement
 
         # Get a reference to the doctors node in the database
@@ -218,7 +332,7 @@ class Patient(tk.Frame):
                 clinic_frame.pack(side="left", padx=10, pady=30)
 
                 doctor_name = doctor_data.get('username')
-                doctor_specialty = doctor_data.get('specialty')
+                doctor_specialty = doctor_data.get('specialist')
 
                 doctor_label = tk.Label(clinic_frame, text=f"Doctor: {doctor_name}")
                 doctor_label.pack()
@@ -235,11 +349,16 @@ class Patient(tk.Frame):
                 row = tk.Frame(self, bg="#9AB892")
                 row.pack()
 
+        # Update the total number of doctor found
+        self.total_label.config(text=f"Total doctors found: {count}") 
     def makeAppointment(self):
         pass
 
     def viewPrescriptionHistory(self):
         pass
+
+    def appointmentRequest(self):
+        pass      
 
 # Main Execution
 if __name__ == "__main__":
@@ -266,7 +385,7 @@ if __name__ == "__main__":
     prescription_btn = tk.Button(nav_bar, text="Prescription", command=app.viewPrescriptionHistory)
     prescription_btn.pack(side="left")
 
-    appointment_request_btn = tk.Button(nav_bar, text="Appointment Request", command=app.sendRequest)
+    appointment_request_btn = tk.Button(nav_bar, text="Appointment Request", command=app.appointmentRequest)
     appointment_request_btn.pack(side="left")
     app.pack(fill="both", expand=True)  # Make the LoginPage fill the entire window
     app.searchClinic()

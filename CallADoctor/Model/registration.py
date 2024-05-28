@@ -5,6 +5,7 @@ import firebase_admin
 from firebase_admin import credentials,initialize_app, db
 import os
 import subprocess
+import re
 from SharePath import start_login
 
 # Create relative file paths
@@ -65,18 +66,29 @@ class RegistrationPage(tk.Frame):
         clinic_names = set()
 
         # Clinic State Selection
-        clinic_state_options = ["Choose Clinic State"]
-        clinic_states = set()
-        
+        clinic_state_options = [
+            "Choose Clinic State",
+            "Johor",
+            "Kedah",
+            "Kelantan",
+            "Melaka",
+            "Negeri Sembilan",
+            "Pahang",
+            "Perak",
+            "Perlis",
+            "Penang",
+            "Sabah",
+            "Sarawak",
+            "Selangor",
+            "Terengganu",
+        ]
+            
         for clinic_id, clinic_data in clinics.items():
             clinic_name = clinic_data.get('clinic_name')
-            clinic_state = clinic_data.get('clinic_state')
             if clinic_name not in clinic_names:
                 clinic_options.append(clinic_name)
                 clinic_names.add(clinic_name)
-            if clinic_state not in clinic_states:
-                clinic_state_options.append(clinic_state)
-                clinic_states.add(clinic_state)
+            
                 
         self.clinic_var = tk.StringVar()
         self.label = tk.Label(self, text="Select Clinic", bg="#9AB892")
@@ -213,11 +225,12 @@ class RegistrationPage(tk.Frame):
         self.ic_passport_id_entry.config(validatecommand=(self.ic_passport_id_entry.register(self.validate_passport), "%P"))
 
     def validate_ic(self, value):
-        if value.isdigit() and len(value) == 12:
+        pattern = r'^\d{6}-\d{2}-\d{4}$'
+        if re.match(pattern, value):
             return True
         else: 
-            messagebox.showerror("Error", "IC ID must be 12 digits")
-        return
+            messagebox.showerror("Error", "IC ID must follow the Malaysia IC format (YYMMDD-PB-####)")
+            return False
 
     def validate_passport(self, value):
         if len(value) >= 8 and len(value) <= 9:
@@ -236,6 +249,21 @@ class RegistrationPage(tk.Frame):
         password = self.password_entry.get()
         confirm_password = self.confirm_password_entry.get()
         specialist = self.specialist_var.get()
+        clinic_info = {}
+
+        clinics_ref = db.reference('clinicAdmins')
+        clinics = clinics_ref.get()
+
+        for clinic_id, clinic_data in clinics.items():
+            clinic_name = clinic_data.get('clinic_name')
+            clinic_state_db = clinic_data.get('clinic_state')
+
+            clinic_info[clinic_name] = clinic_state_db
+                    
+        if role == "Doctor":
+            if clinic_info.get(clinic) != clinic_state:
+                messagebox.showerror("Error", "Clinic not found")
+                return
 
         if role == "Choose Role":
             messagebox.showerror("Error", "Role is required")
