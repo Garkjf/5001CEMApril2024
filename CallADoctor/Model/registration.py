@@ -71,6 +71,7 @@ class RegistrationPage(tk.Frame):
             "Johor",
             "Kedah",
             "Kelantan",
+            "Kuala Lumpur",
             "Melaka",
             "Negeri Sembilan",
             "Pahang",
@@ -121,9 +122,9 @@ class RegistrationPage(tk.Frame):
         self.id_type_var = tk.StringVar()
         self.label = tk.Label(self, text="ID Type", bg="#9AB892")
         self.label.grid(row=9, column=1, padx=20, sticky="w")
-        self.ic_radio = tk.Radiobutton(self, text="IC", variable=self.id_type_var, value="IC", command=self.ic_selected)
+        self.ic_radio = tk.Radiobutton(self, text="IC", variable=self.id_type_var, value="IC")
         self.ic_radio.grid(row=10, column=1, padx=20, pady=5, sticky="w")
-        self.passport_radio = tk.Radiobutton(self, text="Passport", variable=self.id_type_var, value="Passport", command=self.passport_selected)
+        self.passport_radio = tk.Radiobutton(self, text="Passport", variable=self.id_type_var, value="Passport")
         self.passport_radio.grid(row=11, column=1, padx=20, pady=5, sticky="w")
         
         # IC / Passport ID
@@ -153,7 +154,7 @@ class RegistrationPage(tk.Frame):
         self.label.grid(row=5, column=2, padx=20, sticky="w") 
         self.email_entry = tk.Entry(self)
         self.email_entry.grid(row=6, column=2, padx=20, pady=10, sticky="w") 
-
+       
         # Password
         self.label = tk.Label(self, text="Password", bg="#9AB892")
         self.label.grid(row=7, column=2, padx=20, sticky="w") 
@@ -216,14 +217,6 @@ class RegistrationPage(tk.Frame):
         if selected_specialist == "Choose Specialist":
             messagebox.showerror("Error", "Please select a specialist")        
 
-    def ic_selected(self):
-            self.ic_passport_id_entry.config(validate="key")
-            self.ic_passport_id_entry.config(validatecommand=(self.ic_passport_id_entry.register(self.validate_ic), "%P"))
-
-    def passport_selected(self):
-        self.ic_passport_id_entry.config(validate="key")
-        self.ic_passport_id_entry.config(validatecommand=(self.ic_passport_id_entry.register(self.validate_passport), "%P"))
-
     def validate_ic(self, value):
         pattern = r'^\d{6}-\d{2}-\d{4}$'
         if re.match(pattern, value):
@@ -239,6 +232,15 @@ class RegistrationPage(tk.Frame):
             messagebox.showerror("Error", "Passport ID must be 8-9 characters")
         return  
 
+    def validate_email(self, email):
+        
+        pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+        if re.fullmatch(pattern, email):
+            return True
+        else:
+            messagebox.showerror("Error", "Invalid email format")
+            return False
+
     def submit(self):
         role = self.role_var.get()
         clinic = self.clinic_var.get()
@@ -250,6 +252,18 @@ class RegistrationPage(tk.Frame):
         confirm_password = self.confirm_password_entry.get()
         specialist = self.specialist_var.get()
         clinic_info = {}
+
+        # Capitalize the first letter of each word in the username
+        username = username.title()
+
+        if not self.validate_email(email):
+            return
+        
+        if not self.validate_ic(ic_passport_id) and self.id_type_var.get() == "IC":
+            return
+        
+        if not self.validate_passport(ic_passport_id) and self.id_type_var.get() == "Passport":
+            return
 
         clinics_ref = db.reference('clinicAdmins')
         clinics = clinics_ref.get()
@@ -269,11 +283,11 @@ class RegistrationPage(tk.Frame):
             messagebox.showerror("Error", "Role is required")
             return
         
-        if clinic == "Choose Clinic" and role != "Clinic Admin":
+        if clinic == "Choose Clinic" and role == "Doctor":
             messagebox.showerror("Error", "Select a Clinic is required")
             return
         
-        if clinic_state == "Choose Clinic State":
+        if clinic_state == "Choose Clinic State" and role == "Doctor":
             messagebox.showerror("Error", "Select the Clinic State is required")
             return
         
@@ -340,7 +354,8 @@ class RegistrationPage(tk.Frame):
     def save_clinic_admin(self, role, clinic_name, clinic_state, ic_passport_id, username, email, password):
         if clinic_name == "" or clinic_name == "Choose Clinic":
             clinic_name = self.clinic_name_entry.get()
-        
+            # Capitalize the first letter of each word in the username
+            clinic_name = clinic_name.title()
         ref = db.reference('clinicAdmins')
         ref.child(ic_passport_id).set({
             'role': role,
@@ -375,7 +390,7 @@ class RegistrationPage(tk.Frame):
 if __name__ == "__main__":
     root = tk.Tk()  # Create a new Tk root window
     root.title("Call a Doctor")  # Set the title of the window
-    root.geometry("750x550")
+    root.geometry("750x750")
     app = RegistrationPage(root)  # Pass the root window to your LoginPage class
     app.pack(fill="both", expand=True)  # Make the LoginPage fill the entire window
     root.mainloop()  # Start the Tkinter event loop
