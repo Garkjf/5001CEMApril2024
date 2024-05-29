@@ -11,7 +11,7 @@ serviceAccountKeyFile = os.path.join(dir, '../calladoctor-serviceAccountKey.json
 
 class DoctorPage(tk.Frame):
     def __init__(self, parent):
-        super().__init__(parent, bg="#F6F6E9")
+        super().__init__(parent, bg="#9AB892")
         cred = credentials.Certificate(serviceAccountKeyFile)
         initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
 

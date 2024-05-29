@@ -22,6 +22,9 @@ def start_registration():
 def start_patient():
     subprocess.call(["python", os.path.join(dir, 'Patient.py')])
 
+def start_doctor():
+    subprocess.call(["python", os.path.join(dir, 'DoctorPage.py')])
+
 class LoginPage(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent, bg="#9AB892")
@@ -162,8 +165,14 @@ class LoginPage(tk.Frame):
                         messagebox.showinfo("Success", "Login Successful")
                         return self.patientScreen()
 
-                elif role in ["Doctor", "Clinic Admin"]:
-                    if value['ic_passport_id'] == ic_passport_id and value['password'] == password and clinic == value['clinic_name'] and clinic_state == value['clinic_state']:
+                elif role == "Doctor":
+                    if value['ic_passport_id'] == ic_passport_id and value['password'] == password and \
+                        clinic == value['clinic_name'] and clinic_state == value['clinic_state']:
+                        return self.doctorScreen()
+                
+                elif role == "Clinic Admin":
+                    if value['ic_passport_id'] == ic_passport_id and value['password'] == password and \
+                        clinic == value['clinic_name'] and clinic_state == value['clinic_state']:
                         return messagebox.showinfo("Success", "Login Successful")
                     
                 else:
@@ -179,7 +188,10 @@ class LoginPage(tk.Frame):
         start_registration()
 
     def patientScreen(self):
-        start_patient()    
+        start_patient()
+
+    def doctorScreen(self):
+        start_doctor()    
 
 # Main Execution
 if __name__ == "__main__":
