@@ -12,3 +12,9 @@ def start_registration():
 
 def start_patient():
     subprocess.call(["python", os.path.join(dir, "Patient.py")])
+
+def start_doctor():
+    subprocess.call(["python", os.path.join(dir, "DoctorPage.py")])
+
+def start_admin():
+    subprocess.call(["python", os.path.join(dir, "ClinicAdministator.py")])

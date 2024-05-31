@@ -155,21 +155,27 @@ class RegistrationPage(tk.Frame):
         self.email_entry = tk.Entry(self)
         self.email_entry.grid(row=6, column=2, padx=20, pady=10, sticky="w") 
        
+       #  Phone number
+        self.label = tk.Label(self, text="Phone Number", bg="#9AB892")
+        self.label.grid(row=7, column=2, padx=20, sticky="w") 
+        self.phone_no_entry = tk.Entry(self)
+        self.phone_no_entry.grid(row=8, column=2, padx=20, pady=10, sticky="w") 
+
         # Password
         self.label = tk.Label(self, text="Password", bg="#9AB892")
-        self.label.grid(row=7, column=2, padx=20, sticky="w") 
+        self.label.grid(row=9, column=2, padx=20, sticky="w") 
         self.password_entry = tk.Entry(self, show="*")
-        self.password_entry.grid(row=8, column=2, padx=20, pady=10, sticky="w") 
+        self.password_entry.grid(row=10, column=2, padx=20, pady=10, sticky="w") 
 
         # confirm password
         self.label = tk.Label(self, text="Confirm Password", bg="#9AB892")
-        self.label.grid(row=9, column=2, padx=20, sticky="w")
+        self.label.grid(row=11, column=2, padx=20, sticky="w")
         self.confirm_password_entry = tk.Entry(self, show="*")
-        self.confirm_password_entry.grid(row=10, column=2, padx=20, pady=10, sticky="w") 
+        self.confirm_password_entry.grid(row=12, column=2, padx=20, pady=10, sticky="w") 
 
         # Submit button
         self.submit_button = tk.Button(self, text="Submit", bg="#0275DD", fg="#ffffff", command=self.submit)
-        self.submit_button.grid(row=13, column=2, padx=20, pady=10, sticky="w") 
+        self.submit_button.grid(row=14, column=2, padx=20, pady=10, sticky="w") 
         # Right Side End
 
     def check_role_selection(self, event):
@@ -218,8 +224,8 @@ class RegistrationPage(tk.Frame):
             messagebox.showerror("Error", "Please select a specialist")        
 
     def validate_ic(self, value):
-        pattern = r'^\d{6}-\d{2}-\d{4}$'
-        if re.match(pattern, value):
+        ic_regex = r'^\d{6}-\d{2}-\d{4}$'
+        if re.match(ic_regex, value):
             return True
         else: 
             messagebox.showerror("Error", "IC ID must follow the Malaysia IC format (YYMMDD-PB-####)")
@@ -234,11 +240,20 @@ class RegistrationPage(tk.Frame):
 
     def validate_email(self, email):
         
-        pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
-        if re.fullmatch(pattern, email):
+        email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+        if re.fullmatch(email_regex, email):
             return True
         else:
             messagebox.showerror("Error", "Invalid email format")
+            return False
+        
+    def validate_phone(self, phone):
+
+        phone_number_regex = r'^01\d-\d{7,8}$'
+        if re.fullmatch(phone_number_regex, phone):
+            return True
+        else:
+            messagebox.showerror("Error", "PHone Number is not in Correct Format! \n Should use Malaysia Phone Number Format (01X-XXXXXXX)")
             return False
 
     def submit(self):
@@ -248,6 +263,7 @@ class RegistrationPage(tk.Frame):
         ic_passport_id = self.ic_passport_id_entry.get()
         username = self.username_entry.get()
         email = self.email_entry.get()
+        phone = self.phone_no_entry.get()
         password = self.password_entry.get()
         confirm_password = self.confirm_password_entry.get()
         specialist = self.specialist_var.get()
@@ -303,6 +319,10 @@ class RegistrationPage(tk.Frame):
             messagebox.showerror("Error", "Email is required")
             return
         
+        if phone == "":
+            messagebox.showerror("Error", "Phone Number is required")
+            return
+
         if password == "":  
             messagebox.showerror("Error", "Password is required")
             return
@@ -327,13 +347,13 @@ class RegistrationPage(tk.Frame):
                 return
             
             if role == 'Patient':
-                self.save_patient(role, ic_passport_id, username, email, password)
+                self.save_patient(role, ic_passport_id, username, email, phone, password)
                 messagebox.showinfo("Success", "Patient registration successful")
             elif role == 'Doctor':
-                self.save_doctor(role, clinic, clinic_state, ic_passport_id, username, email, password, specialist)
+                self.save_doctor(role, clinic, clinic_state, ic_passport_id, username, email, phone, password, specialist)
                 messagebox.showinfo("Success", "Your Doctor registration information is sending for approval")
             elif role == 'Clinic Admin':
-                self.save_clinic_admin(role, clinic, clinic_state, ic_passport_id, username, email, password)
+                self.save_clinic_admin(role, clinic, clinic_state, ic_passport_id, username, email, phone, password)
                 messagebox.showinfo("Success", "Your Clinic Admin registration information is sending for approval")
             else:
                 messagebox.showerror("Error", "Invalid role selected")
@@ -341,17 +361,18 @@ class RegistrationPage(tk.Frame):
             print(e)
             messagebox.showerror("Error", e)
 
-    def save_patient(self, role, ic_passport_id, username, email, password):
+    def save_patient(self, role, ic_passport_id, username, email, phone, password):
         ref = db.reference('patients')
         ref.child(ic_passport_id).set({
             'role': role,
             'ic_passport_id': ic_passport_id,
             'username': username,
             'email': email,
+            'phone': phone,
             'password': password
         })
 
-    def save_clinic_admin(self, role, clinic_name, clinic_state, ic_passport_id, username, email, password):
+    def save_clinic_admin(self, role, clinic_name, clinic_state, ic_passport_id, username, email, phone, password):
         if clinic_name == "" or clinic_name == "Choose Clinic":
             clinic_name = self.clinic_name_entry.get()
             # Capitalize the first letter of each word in the username
@@ -364,10 +385,11 @@ class RegistrationPage(tk.Frame):
             'ic_passport_id': ic_passport_id,
             'username': username,
             'email': email,
+            'phone': phone,
             'password': password
         })
 
-    def save_doctor(self, role, clinic_name, clinic_state, ic_passport_id, username, email, password, specialist):
+    def save_doctor(self, role, clinic_name, clinic_state, ic_passport_id, username, email, phone, password, specialist):
         if clinic_name == "":
             clinic_name = self.clinic_name_entry.get()
 
@@ -379,6 +401,7 @@ class RegistrationPage(tk.Frame):
             'ic_passport_id': ic_passport_id,
             'username': username,
             'email': email,
+            'phone': phone,
             'password': password,
             'specialist': specialist
         })        

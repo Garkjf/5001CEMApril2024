@@ -4,7 +4,7 @@ from tkinter import messagebox
 from firebase_admin import credentials, initialize_app ,db
 import os
 import subprocess
-from SharePath import start_registration, start_patient
+from SharePath import start_registration, start_patient, start_doctor, start_admin
 
 # Create relative file paths
 dir = os.path.dirname(__file__)
@@ -21,6 +21,12 @@ def start_registration():
 
 def start_patient():
     subprocess.call(["python", os.path.join(dir, 'Patient.py')])
+
+def start_doctor():
+    subprocess.call(["python", os.path.join(dir, 'DoctorPage.py')])
+
+def start_admin():
+    subprocess.call(["python", os.path.join(dir, 'ClinicAdministator.py')])
 
 class LoginPage(tk.Frame):
     def __init__(self, parent):
@@ -162,10 +168,15 @@ class LoginPage(tk.Frame):
                         messagebox.showinfo("Success", "Login Successful")
                         return self.patientScreen()
 
-                elif role in ["Doctor", "Clinic Admin"]:
+                elif role == "Doctor":
                     if value['ic_passport_id'] == ic_passport_id and value['password'] == password and clinic == value['clinic_name'] and clinic_state == value['clinic_state']:
-                        return messagebox.showinfo("Success", "Login Successful")
+                        messagebox.showinfo("Success", "Login Successful")
+                        return self.doctorScreen()
                     
+                elif role == "Clinic Admin":
+                    if value['ic_passport_id'] == ic_passport_id and value['password'] == password and clinic == value['clinic_name'] and clinic_state == value['clinic_state']:
+                        messagebox.showinfo("Success", "Login Successful")
+                        return self.clinicAdminScreen()
                 else:
                     raise Exception("Invalid role")
                
@@ -179,7 +190,13 @@ class LoginPage(tk.Frame):
         start_registration()
 
     def patientScreen(self):
-        start_patient()    
+        start_patient()   
+
+    def doctorScreen(self):
+        start_doctor()
+    
+    def adminScreen(self):
+        start_admin()
 
 # Main Execution
 if __name__ == "__main__":
