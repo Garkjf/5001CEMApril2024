@@ -94,7 +94,7 @@ class RegistrationPage(tk.Frame):
         self.clinic_var = tk.StringVar()
         self.label = tk.Label(self, text="Select Clinic", bg="#9AB892")
         self.label.grid(row=3, column=1, padx=20, sticky="w")
-        self.clinic_dropdown = ttk.Combobox(self, textvariable=self.clinic_var, values=clinic_options, state="readonly")
+        self.clinic_dropdown = ttk.Combobox(self, textvariable=self.clinic_var, values=clinic_options, state="readonly",  width=30)
         self.clinic_dropdown.current(0)  # Set the default value to "Choose Clinic"
         self.clinic_dropdown.grid(row=4, column=1, padx=20, pady=10, sticky="w")
         self.clinic_dropdown.bind("<<ComboboxSelected>>", self.check_clinic_selection)
@@ -113,7 +113,7 @@ class RegistrationPage(tk.Frame):
         self.label = tk.Label(self, text="Select Specialist", bg="#9AB892")
         self.label.grid(row=7, column=1, padx=20, sticky="w")  # Changed column to 0
         specialist_options = ["Choose Specialist", "Cardiology", "Dermatology", "Endocrinology", "Gastroenterology", "Neurology", "Oncology", "Pediatrics", "Psychiatry", "Radiology", "Urology"]
-        self.specialist_dropdown = ttk.Combobox(self, textvariable=self.specialist_var, values=specialist_options, state="readonly")
+        self.specialist_dropdown = ttk.Combobox(self, textvariable=self.specialist_var, values=specialist_options, state="readonly",  width=25)
         self.specialist_dropdown.current(0)  # Set the default value to "Choose Specialist"
         self.specialist_dropdown.grid(row=8, column=1, padx=20, pady=10, sticky="w") 
         self.specialist_dropdown.bind("<<ComboboxSelected>>", self.check_specialist_selection)
@@ -275,11 +275,13 @@ class RegistrationPage(tk.Frame):
         if not self.validate_email(email):
             return
         
-        if not self.validate_ic(ic_passport_id) and self.id_type_var.get() == "IC":
-            return
+        if self.id_type_var.get() == "IC":
+             if not self.validate_ic(ic_passport_id):
+                return
         
-        if not self.validate_passport(ic_passport_id) and self.id_type_var.get() == "Passport":
-            return
+        elif self.id_type_var.get() == "Passport":
+            if not self.validate_passport(ic_passport_id):
+                return
 
         clinics_ref = db.reference('clinicAdmins')
         clinics = clinics_ref.get()
@@ -346,6 +348,10 @@ class RegistrationPage(tk.Frame):
                 messagebox.showerror("Error", "IC/Passport ID already exists")
                 return
             
+            if ref.child(phone).get() is not None:
+                messagebox.showerror("Error", "Phone Number already exists")
+                return 
+
             if role == 'Doctor':
                 self.save_doctor(role, clinic, clinic_state, ic_passport_id, username, email, phone, password, specialist)
                 messagebox.showinfo("Success", "Your Doctor registration information is sending for approval")

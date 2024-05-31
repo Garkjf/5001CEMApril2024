@@ -152,11 +152,13 @@ class RegistrationPage(tk.Frame):
         if not self.validate_email(email):
             return
         
-        if not self.validate_ic(ic_passport_id) and self.id_type_var.get() == "IC":
-            return
+        if self.id_type_var.get() == "IC":
+             if not self.validate_ic(ic_passport_id):
+                return
         
-        if not self.validate_passport(ic_passport_id) and self.id_type_var.get() == "Passport":
-            return
+        elif self.id_type_var.get() == "Passport":
+            if not self.validate_passport(ic_passport_id):
+                return
                     
         if role == "Choose Role":
             messagebox.showerror("Error", "Role is required")
@@ -196,6 +198,10 @@ class RegistrationPage(tk.Frame):
             if ref.child(ic_passport_id).get() is not None:
                 messagebox.showerror("Error", "IC/Passport ID already exists")
                 return
+            
+            if ref.child(phone).get() is not None:
+                messagebox.showerror("Error", "Phone Number already exists")
+                return 
             
             if role == 'Patient':
                 self.save_patient(role, ic_passport_id, username, email, phone, password)

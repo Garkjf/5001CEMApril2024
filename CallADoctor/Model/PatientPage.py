@@ -25,10 +25,19 @@ class PatientPage(tk.Frame):
     def searchClinic(self):
         self.clearClinicInfo()  
         self.clearFilters()
+
+        # Create font style
         bold14 = Font(self.master, size=14, weight=BOLD) 
         bold10 = Font(self.master, size=10, weight=BOLD) 
+        
+        row = tk.Frame(self, bg="#F6F6E9")
+        row.grid(sticky="w")
+
+        clinic_filter_frame = tk.Frame(row, borderwidth=2, relief="groove", width=300, height=100)
+        clinic_filter_frame.grid(row=0, column=0, padx=10, pady=30, sticky="w")
+
         label = tk.Label(self, text="Search For Clinics", bg="#F6F6E9", font=bold14)
-        label.pack(padx=20, pady=(10, 0), anchor="w")
+        label.grid(row=0, column=0, pady=20, padx=10,  sticky="w")
 
         # Get a reference to the clinics node in the database
         clinics_ref = db.reference('clinicAdmins')
@@ -56,31 +65,34 @@ class PatientPage(tk.Frame):
         # Clinic state Selection
         self.clinic_state_var = tk.StringVar()
         self.label = tk.Label(self, text="Filter by Clinic State", bg="#F6F6E9", font=bold10)
-        self.label.pack(pady=(10), padx=(10), anchor="w")  
+        self.label.grid(row=1, column=0, pady=10, padx=10,  sticky="w")  
         self.clinic_state_dropdown = ttk.Combobox(self, textvariable=self.clinic_state_var, values=clinic_state_options, state="readonly")
         self.clinic_state_dropdown.current(0)  # Set the default value to "All State"
-        self.clinic_state_dropdown.pack(pady=(10), padx=(10), anchor="w") 
+        self.clinic_state_dropdown.grid(row=2, column=0, pady=10, padx=10, sticky="w") 
 
         # Clinic name Selection
         self.clinic_var = tk.StringVar()
         self.label = tk.Label(self, text="Filter by Clinic Name", bg="#F6F6E9", font=bold10)
-        self.label.pack(pady=(10), padx=(10), anchor="w")
+        self.label.grid(row=1, column=0, pady=10, padx=200, sticky="w")
         self.clinic_dropdown = ttk.Combobox(self, textvariable=self.clinic_var, values=clinic_options, state="readonly")
         self.clinic_dropdown.current(0)  # Set the default value to "All Clinic"
-        self.clinic_dropdown.pack(pady=(10), padx=(10), anchor="w")
+        self.clinic_dropdown.grid(row=2, column=0, pady=10, padx=200, sticky="w")
 
         submit_button = tk.Button(self, text="Search", bg="#0275DD", fg="#ffffff", command=self.displayClinicInfo)
-        submit_button.pack(pady=(10), padx=(10), anchor="w")
+        submit_button.grid(row=2, column=0, pady=10, padx=400, sticky="w")
 
         # initialize the total clinic found label
         self.total_label = tk.Label(self, text="Total clinics found: 0", bg="#F6F6E9", font=bold10)
-        self.total_label.pack(pady=(5), padx=(10), anchor="w")
+        self.total_label.grid(row=3, column=0, pady=10, padx=10, sticky="w")
 
         self.displayClinicInfo()
 
     def displayClinicInfo(self):
         # Clear the clinic information
         self.clearClinicInfo()
+
+        #  create font style
+        bold12 = Font(self.master, size=12, weight=BOLD, family="Helvetica")
 
         # Get the selected clinic state and clinic name
         selected_state = self.clinic_state_var.get()
@@ -98,7 +110,7 @@ class PatientPage(tk.Frame):
         # Display the clinic information
         count = 0
         row = tk.Frame(self, bg="#F6F6E9")
-        row.pack()
+        row.grid()
 
         for clinic_id, clinic_data in clinics.items():
             clinic_name = clinic_data.get('clinic_name')
@@ -117,23 +129,25 @@ class PatientPage(tk.Frame):
                     continue
 
                 # Frame for the clinic
-                clinic_frame = tk.Frame(row, borderwidth=2, relief="groove", width=300, height=100)
-                clinic_frame.pack(side="left", padx=10, pady=30)
+                clinic_frame = tk.Frame(row, borderwidth=2, relief="groove", width=200, height=100)
+                clinic_frame.grid(row=count//4, column=count%4, padx=10, pady=30, sticky="w")
 
-                name_label = tk.Label(clinic_frame, text=f"Clinic Name: {clinic_name}")
-                name_label.pack(padx= 10, pady=5)
+                # Clinic Name
+                name_label_text = tk.Label(clinic_frame, text="Clinic Name: ", font= bold12)
+                name_label_text.grid(row=0, column=count, sticky="w", padx=5, pady=5)
+                name_label_value = tk.Label(clinic_frame, text=clinic_name)
+                name_label_value.grid(row=0, column=count+1, sticky="w", padx=5, pady=5)
 
-                state_label = tk.Label(clinic_frame, text=f"Clinic State: {clinic_state}")
-                state_label.pack(padx= 10, pady=5)
+                # Clinic State
+                state_label_text = tk.Label(clinic_frame, text="Clinic State: ", font= bold12)
+                state_label_text.grid(row=1, column=count, sticky="w", padx=5, pady=5)
+                state_label_value = tk.Label(clinic_frame, text=clinic_state)
+                state_label_value.grid(row=1, column=count+1, sticky="w", padx=5, pady=5)
 
                 view_more_button = tk.Button(clinic_frame, text="View More",bg="#0275DD", fg="#ffffff", command=lambda clinic_id=clinic_id, clinic_name=clinic_name, clinic_state=clinic_state : self.doctorListFilter(clinic_id, clinic_name, clinic_state))
-                view_more_button.pack(padx= 10, pady=5)
+                view_more_button.grid(row=2, column=count, columnspan=2, padx=5, pady=5)
 
                 count += 1
-
-            if count % 4 == 0:
-                row = tk.Frame(self, bg="#F6F6E9")
-                row.pack()
 
         # Update the total number of clinics found
         self.total_label.config(text=f"Total clinics found: {count}")        
@@ -158,8 +172,15 @@ class PatientPage(tk.Frame):
          # Start Filter Part - Filter by Doctor Specialty
         bold14 = Font(self.master, size=14, weight=BOLD) 
         bold10 = Font(self.master, size=10, weight=BOLD) 
+
+        row = tk.Frame(self, bg="#F6F6E9")
+        row.grid(sticky="w")
+
+        doctor_filter_frame = tk.Frame(row, borderwidth=2, relief="groove", width=300, height=100)
+        doctor_filter_frame.grid(row=0, column=0, padx=10, pady=30, sticky="w")
+
         label = tk.Label(self, text=f"Search For {selected_clinic} - {selected_state} Doctors", bg="#F6F6E9", font=bold14)
-        label.pack(padx=20, pady=(10, 0), anchor="w")
+        label.grid(row=0, column=0, padx=20, pady=10, sticky="w")
 
         # Load the back icon
         back_icon = tk.PhotoImage(file=backIconImage)
@@ -168,7 +189,7 @@ class PatientPage(tk.Frame):
         # Back button
         back_button = tk.Button(self, image=back_icon, command=self.searchClinic)
         back_button.image = back_icon 
-        back_button.pack(pady=5, padx=250, anchor="e")
+        back_button.grid(row=1, sticky="e")
 
         # Get a reference to the doctors node in the database
         docotrs_ref = db.reference('doctors')
@@ -190,24 +211,28 @@ class PatientPage(tk.Frame):
         # Doctor Specialty Selection
         self.doctor_specialty_var = tk.StringVar()
         self.label = tk.Label(self, text="Filter by Doctor Specialty", bg="#F6F6E9", font=bold10)
-        self.label.pack(pady=(10), padx=(10), anchor="w")  
+        self.label.grid(row=1, column=0, pady=10, padx=10, sticky="w")  
         self.clinic_state_dropdown = ttk.Combobox(self, textvariable=self.doctor_specialty_var, values=doctor_specialty_options, state="readonly")
         self.clinic_state_dropdown.current(0)  # Set the default value to "All specialty"
-        self.clinic_state_dropdown.pack(pady=(10), padx=(10), anchor="w") 
+        self.clinic_state_dropdown.grid(row=2, column=0, pady=10, padx=10, sticky="w") 
 
         submit_button = tk.Button(self, text="Search", bg="#0275DD", fg="#ffffff", command=lambda: self.viewDoctorList(clinic_id, selected_clinic, selected_state, self.doctor_specialty_var.get()))
-        submit_button.pack(pady=(10), padx=(10), anchor="w")
+        submit_button.grid(row=2, column=0, pady=10, padx=200, sticky="w")
         # End Filter Part - Filter by Doctor Specialty
 
         # initialize the total doctor found label
         self.total_label = tk.Label(self, text="Total doctor found: 0", bg="#F6F6E9", font=bold10)
-        self.total_label.pack(padx=(10), anchor="w")
+        self.total_label.grid(row=3, column=0, pady=10, padx=10, sticky="w")
 
         self.viewDoctorList(clinic_id, selected_clinic, selected_state, self.doctor_specialty_var.get())
 
     def viewDoctorList(self, clinic_id, selected_clinic, selected_state, selected_specialty):
         # Clear the clinic information
         self.clearClinicInfo()
+
+        #  create font style
+        bold12 = Font(self.master, size=12, weight=BOLD, family="Helvetica")
+        
         print("viewDoctorList called")  # Debugging print statement
 
         # Get the selected clinic state and clinic name
@@ -223,7 +248,7 @@ class PatientPage(tk.Frame):
         # Display the clinic information
         count = 0
         row = tk.Frame(self, bg="#F6F6E9")
-        row.pack()
+        row.grid()
         
         # Display the related doctors
         for doctor_id, doctor_data in doctors.items():
@@ -231,34 +256,37 @@ class PatientPage(tk.Frame):
                 print(f"Match found for doctor {doctor_id}")  # Debugging print statement
 
                 clinic_frame = tk.Frame(row, borderwidth=2, relief="groove", width=300, height=100)
-                clinic_frame.pack(side="left", padx=10, pady=30)
+                clinic_frame.grid(row=count//4, column=count%4, padx=10, pady=30, sticky="w")
 
                 doctor_name = doctor_data.get('username')
                 doctor_specialty = doctor_data.get('specialist')
 
-                doctor_label = tk.Label(clinic_frame, text=f"Doctor: {doctor_name}")
-                doctor_label.pack(padx=10, pady=5)
+                # Clinic Name
+                doctor_label_text = tk.Label(clinic_frame, text="Doctor: ", font= bold12)
+                doctor_label_text.grid(row=0, column=count, sticky="w", padx=10, pady=5)
+                doctor_label_value = tk.Label(clinic_frame, text=doctor_name)
+                doctor_label_value.grid(row=0, column=count+1, sticky="w", padx=10, pady=5)
 
-                specialty_label = tk.Label(clinic_frame, text=f"Specialty: {doctor_specialty}")
-                specialty_label.pack(padx=10, pady=5)
+                # Clinic State
+                specialty_label_text = tk.Label(clinic_frame, text="Specialty: ", font= bold12)
+                specialty_label_text.grid(row=1, column=count, sticky="w", padx=10, pady=5)
+                specialty_label_value = tk.Label(clinic_frame, text=doctor_specialty)
+                specialty_label_value.grid(row=1, column=count+1, sticky="w", padx=10, pady=5)
 
-                view_more_button = tk.Button(clinic_frame, text="View more", bg="#0275DD", fg="#ffffff", command=lambda doctor_id=doctor_id: self.viewDoctorInformation(doctor_id, selected_clinic, selected_state))
-                view_more_button.pack(padx= 10, pady=5)
+                view_more_button = tk.Button(clinic_frame, text="View More",bg="#0275DD", fg="#ffffff", command=lambda doctor_id=doctor_id: self.viewDoctorInformation(doctor_id, selected_clinic, selected_state))
+                view_more_button.grid(row=2, column=count, columnspan=2, padx=10, pady=5)
 
                 count += 1
-
-            if count % 4 == 0:
-                row = tk.Frame(self, bg="#F6F6E9")
-                row.pack()
 
         # Update the total number of doctor found
         try:
             self.total_label.config()
         except tk.TclError:
             self.total_label = tk.Label(self, text="Total doctor found: 0", bg="#F6F6E9", font=Font(self.master, size=10, weight=BOLD))
-            self.total_label.pack(padx=(10), anchor="w")
+            self.total_label.grid(row=3, column=0, padx=10, sticky="w")
 
-        self.total_label.config(text=f"Total doctors found: {count}")   
+        # Update the total number of clinics found
+        self.total_label.config(text=f"Total doctors found: {count}")  
 
     def viewDoctorInformation(self, search_doctor_id, selected_clinic, selected_state):          
         # Clear the doctor information
@@ -284,34 +312,36 @@ class PatientPage(tk.Frame):
 
         # Start Filter Part - Filter by Doctor Specialty
         bold14 = Font(self.master, size=14, weight=BOLD) 
-        label = tk.Label(self, text=f"Search For {selected_clinic} {selected_state} Doctor Detail", bg="#F6F6E9", font=bold14)
+        bold12 = Font(self.master, size=12, weight=BOLD)
+        label = tk.Label(self, text=f"Search For {selected_clinic} - {selected_state}'s Doctor Detail", bg="#F6F6E9", font=bold14)
         label.pack(padx=20, pady=(10, 0), anchor="w")
-        label = tk.Label(self, text=f"Doctor {doctor_name}:", bg="#F6F6E9", font=bold14)
-        label.pack(padx=20, pady=(5, 0), anchor="w")
-        # Load the back icon
-        back_icon = tk.PhotoImage(file=backIconImage)
-        back_icon = back_icon.subsample(20, 20)
 
         # Back button
+        back_icon = tk.PhotoImage(file=backIconImage)
+        back_icon = back_icon.subsample(20, 20)
+        # Load the back icon
         back_button = tk.Button(self, image=back_icon, command=lambda clinic_id=doctor_id: self.doctorListFilter(clinic_id, selected_clinic, selected_state))
         back_button.image = back_icon 
         back_button.pack(pady=5, padx=250, anchor="e")
 
-        info_frame = tk.Frame(self, bg="#d9d9d9")
-        info_frame.pack(padx=10, pady=10)
+        label = tk.Label(self, text=f"Dr. {doctor_name}:", bg="#F6F6E9", font=bold12)
+        label.pack(padx=40, pady=(5, 0), anchor="w")
 
-        tk.Label(info_frame, text="Doctor Name: ", font=("Helvetica", 10, "bold"), bg="#d9d9d9").pack()
-        tk.Label(info_frame, text=doctor_name, bg="#d9d9d9").pack()
-        tk.Label(info_frame, text="Doctor Phone: ", font=("Helvetica", 10, "bold"), bg="#d9d9d9").pack()
-        tk.Label(info_frame, text=doctor_phone, bg="#d9d9d9").pack()
-        tk.Label(info_frame, text="Doctor Email: ", font=("Helvetica", 10, "bold"), bg="#d9d9d9").pack()
-        tk.Label(info_frame, text=doctor_email, bg="#d9d9d9").pack()
-        tk.Label(info_frame, text="Doctor Specialty: ", font=("Helvetica", 10, "bold"), bg="#d9d9d9").pack()
-        tk.Label(info_frame, text=doctor_specialty, bg="#d9d9d9").pack()
-        tk.Label(info_frame, text="Clinic Name: ", font=("Helvetica", 10, "bold"), bg="#d9d9d9").pack()
-        tk.Label(info_frame, text=clinic_name, bg="#d9d9d9").pack()
-        tk.Label(info_frame, text="Clinic State: ", font=("Helvetica", 10, "bold"), bg="#d9d9d9").pack()
-        tk.Label(info_frame, text=clinic_state, bg="#d9d9d9").pack()        
+        info_frame = tk.Frame(self, bg="#d9d9d9", width=400, height=300)
+        info_frame.pack(padx=20, pady=20)
+
+        labels = [
+            ("Doctor Name :", doctor_name),
+            ("Doctor Phone :", doctor_phone),
+            ("Doctor Email :", doctor_email),
+            ("Doctor Specialty :", doctor_specialty),
+            ("Clinic Name :", clinic_name),
+            ("Clinic State :", clinic_state),
+        ]
+
+        for i, (label, value) in enumerate(labels):
+            tk.Label(info_frame, text=label, font=("Helvetica", 12, "bold"), bg="#d9d9d9", padx=30, pady=10).grid(row=i, column=0, sticky="w")
+            tk.Label(info_frame, text=value, font=("Helvetica", 10), bg="#d9d9d9", padx=30, pady=10).grid(row=i, column=1, sticky="w")
 
     def makeAppointment(self):
         pass

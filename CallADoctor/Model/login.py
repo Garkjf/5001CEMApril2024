@@ -82,7 +82,7 @@ class LoginPage(tk.Frame):
         self.clinic_var = tk.StringVar()
         self.label = tk.Label(self, text="Select Clinic", bg="#9AB892")
         self.label.grid(row=3, column=4, padx=20, sticky="w")
-        self.clinic_dropdown = ttk.Combobox(self, textvariable=self.clinic_var, values=clinic_options, state="readonly")
+        self.clinic_dropdown = ttk.Combobox(self, textvariable=self.clinic_var, values=clinic_options, state="readonly", width=30)
         self.clinic_dropdown.current(0)  # Set the default value to "Choose Clinic"
         self.clinic_dropdown.grid(row=4, column=4, padx=20, pady=10, sticky="w")
         self.clinic_dropdown.bind("<<ComboboxSelected>>", self.check_clinic_selection)
