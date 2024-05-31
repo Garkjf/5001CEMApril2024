@@ -189,7 +189,7 @@ class PatientPage(tk.Frame):
         # Back button
         back_button = tk.Button(self, image=back_icon, command=self.searchClinic)
         back_button.image = back_icon 
-        back_button.grid(row=1, sticky="e")
+        back_button.grid(row=0, columnspan=5, pady=10, padx=1000, sticky="e")
 
         # Get a reference to the doctors node in the database
         docotrs_ref = db.reference('doctors')
@@ -243,7 +243,6 @@ class PatientPage(tk.Frame):
 
         # Retrieve the doctors data
         doctors = doctors_ref.get()
-        print(f"doctors: {doctors}") # Debugging print statement
 
         # Display the clinic information
         count = 0
@@ -314,7 +313,7 @@ class PatientPage(tk.Frame):
         bold14 = Font(self.master, size=14, weight=BOLD) 
         bold12 = Font(self.master, size=12, weight=BOLD)
         label = tk.Label(self, text=f"Search For {selected_clinic} - {selected_state}'s Doctor Detail", bg="#F6F6E9", font=bold14)
-        label.pack(padx=20, pady=(10, 0), anchor="w")
+        label.grid(row=0, column=0, padx=20, pady=10, sticky="w")
 
         # Back button
         back_icon = tk.PhotoImage(file=backIconImage)
@@ -322,13 +321,13 @@ class PatientPage(tk.Frame):
         # Load the back icon
         back_button = tk.Button(self, image=back_icon, command=lambda clinic_id=doctor_id: self.doctorListFilter(clinic_id, selected_clinic, selected_state))
         back_button.image = back_icon 
-        back_button.pack(pady=5, padx=250, anchor="e")
+        back_button.grid(row=0, columnspan=5, pady=10, padx=1000, sticky="w")
 
         label = tk.Label(self, text=f"Dr. {doctor_name}:", bg="#F6F6E9", font=bold12)
-        label.pack(padx=40, pady=(5, 0), anchor="w")
+        label.grid(row=2, column=0, padx=40, pady=5, sticky="w")
 
         info_frame = tk.Frame(self, bg="#d9d9d9", width=400, height=300)
-        info_frame.pack(padx=20, pady=20)
+        info_frame.grid(row=3, column=0)
 
         labels = [
             ("Doctor Name :", doctor_name),
@@ -356,7 +355,7 @@ class PatientPage(tk.Frame):
 if __name__ == "__main__":
     root = tk.Tk()  # Create a new Tk root window
     root.title("Call a Doctor - Patient Page")  # Set the title of the window
-    root.geometry("1200x700")
+    root.geometry("1200x600")
     root.configure(background='#f6f6e9')
 
     # Load the logo image
@@ -376,24 +375,24 @@ if __name__ == "__main__":
     main_frame.pack(fill=tk.BOTH, expand=1)
 
     # Create a canvas inside the main frame
-    my_canvas = tk.Canvas(main_frame)
+    my_canvas = tk.Canvas(main_frame, bg="#f6f6e9", height=600)
     my_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
 
-    # Add a scrollbar to the canvas
-    my_scrollbar = tk.Scrollbar(main_frame, orient=tk.VERTICAL, command=my_canvas.yview)
-    my_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    # Add a vertical scrollbar to the canvas
+    my_scrollbar_vertival = tk.Scrollbar(main_frame, orient=tk.VERTICAL, command=my_canvas.yview)
+    my_scrollbar_vertival.pack(side=tk.RIGHT, fill=tk.Y)
 
     # Configure the canvas
-    my_canvas.configure(yscrollcommand=my_scrollbar.set)
-    my_canvas.bind('<Configure>', lambda e: my_canvas.configure(scrollregion=my_canvas.bbox("all")))
+    my_canvas.configure(yscrollcommand=my_scrollbar_vertival.set)
 
     # Create another frame inside the canvas
-    second_frame = tk.Frame(my_canvas, bg="#f6f6e9")
+    second_frame = tk.Frame(my_canvas, bg="#f6f6e9", width=1200, height=600)
 
     # Add that new frame to a window in the canvas
     my_canvas.create_window((0,0), window=second_frame, anchor="nw")
-    second_frame.pack(fill="both", expand=True)
 
+    # Update the scrollregion of the canvas to include the entire second_frame
+    second_frame.bind('<Configure>', lambda e: my_canvas.configure(scrollregion=my_canvas.bbox("all")))
     # display image
     logo_label = tk.Label(nav_bar, image=logo)
     logo_label.pack(side="left", fill="x")   
