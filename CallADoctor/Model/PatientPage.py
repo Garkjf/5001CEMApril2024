@@ -6,7 +6,7 @@ from firebase_admin import credentials, initialize_app ,db
 from tkinter.font import BOLD, Font
 import os
 import subprocess
-import Patient
+import PatientPage
 
 # Create relative file paths
 dir = os.path.dirname(__file__)
@@ -15,7 +15,7 @@ serviceAccountKeyFile = os.path.join(dir, '../calladoctor-serviceAccountKey.json
 logoImageFile = os.path.join(dir, '../Images/CallADoctor-logo-small.png')  # Change the path to your own logo image
 backIconImage = os.path.join(dir, '../Images/back-icon.png') # Change the path to your own logo image
 
-class Patient(tk.Frame):
+class PatientPage(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent, bg="#F6F6E9")
         self.pack(fill=tk.BOTH, expand=True)
@@ -369,7 +369,7 @@ if __name__ == "__main__":
     logo_label.pack(side="left", fill="x")   
  
     # Body
-    app = Patient(second_frame)  # Pass the second_frame window to your LoginPage class
+    app = PatientPage(second_frame)  # Pass the second_frame window to your LoginPage class
 
     search_clinics_btn = tk.Button(nav_bar, text="Search Clinics", command=app.searchClinic)
     search_clinics_btn.pack(side="left", fill="x")

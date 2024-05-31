@@ -17,16 +17,16 @@ cred = credentials.Certificate(serviceAccountKeyFile)
 initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
 
 def start_registration():
-    subprocess.call(["python", os.path.join(dir, 'registration.py')])    
+    subprocess.call(["python", os.path.join(dir, 'Registration.py')])    
 
 def start_patient():
-    subprocess.call(["python", os.path.join(dir, 'Patient.py')])
+    subprocess.call(["python", os.path.join(dir, 'PatientPage.py')])
 
 def start_doctor():
     subprocess.call(["python", os.path.join(dir, 'DoctorPage.py')])
 
 def start_admin():
-    subprocess.call(["python", os.path.join(dir, 'ClinicAdministator.py')])
+    subprocess.call(["python", os.path.join(dir, 'ClinicAdministatorPage.py')])
 
 class LoginPage(tk.Frame):
     def __init__(self, parent):

@@ -19,7 +19,7 @@ cred = credentials.Certificate(serviceAccountKeyFile)
 initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
 
 def start_login():
-    subprocess.call(["python", os.path.join(dir, 'login.py')])
+    subprocess.call(["python", os.path.join(dir, 'Login.py')])
 
 class RegistrationPage(tk.Frame):
     def __init__(self, parent):

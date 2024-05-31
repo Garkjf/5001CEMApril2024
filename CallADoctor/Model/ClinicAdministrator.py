@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 
-class ClinicAdminstator:
+class ClinicAdministrator:
     def __init__(self):
         self.clinic_admin_id = None
         self.email = None

@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "main": "index.js",
     "scripts": {
-      "start": "python 5001CEMApril2024/CallADoctor/Model/login.py",
+      "start": "python 5001CEMApril2024/CallADoctor/Model/Login.py",
       "test": "echo \"Error: no test specified\" && exit 1"
     },
     "author": "",
