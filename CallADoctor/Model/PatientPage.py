@@ -7,6 +7,7 @@ from tkinter.font import BOLD, Font
 import os
 import subprocess
 import PatientPage
+from SharePath import start_login
 
 # Create relative file paths
 dir = os.path.dirname(__file__)
@@ -14,6 +15,9 @@ dir = os.path.dirname(__file__)
 serviceAccountKeyFile = os.path.join(dir, '../calladoctor-serviceAccountKey.json')   # Change the path to your own serviceAccountKey.json
 logoImageFile = os.path.join(dir, '../Images/CallADoctor-logo-small.png')  # Change the path to your own logo image
 backIconImage = os.path.join(dir, '../Images/back-icon.png') # Change the path to your own logo image
+
+def start_login():
+    subprocess.Popen(["python", os.path.join(dir, 'Login.py')])
 
 class PatientPage(tk.Frame):
     def __init__(self, parent):
@@ -74,12 +78,12 @@ class PatientPage(tk.Frame):
         self.clinic_var = tk.StringVar()
         self.label = tk.Label(self, text="Filter by Clinic Name", bg="#F6F6E9", font=bold10)
         self.label.grid(row=1, column=0, pady=10, padx=200, sticky="w")
-        self.clinic_dropdown = ttk.Combobox(self, textvariable=self.clinic_var, values=clinic_options, state="readonly")
+        self.clinic_dropdown = ttk.Combobox(self, textvariable=self.clinic_var, values=clinic_options, state="readonly", width=35)
         self.clinic_dropdown.current(0)  # Set the default value to "All Clinic"
         self.clinic_dropdown.grid(row=2, column=0, pady=10, padx=200, sticky="w")
 
         submit_button = tk.Button(self, text="Search", bg="#0275DD", fg="#ffffff", command=self.displayClinicInfo)
-        submit_button.grid(row=2, column=0, pady=10, padx=400, sticky="w")
+        submit_button.grid(row=2, column=0, pady=10, padx=480, sticky="w")
 
         # initialize the total clinic found label
         self.total_label = tk.Label(self, text="Total clinics found: 0", bg="#F6F6E9", font=bold10)
@@ -144,7 +148,7 @@ class PatientPage(tk.Frame):
                 state_label_value = tk.Label(clinic_frame, text=clinic_state)
                 state_label_value.grid(row=1, column=count+1, sticky="w", padx=5, pady=5)
 
-                view_more_button = tk.Button(clinic_frame, text="View More",bg="#0275DD", fg="#ffffff", command=lambda clinic_id=clinic_id, clinic_name=clinic_name, clinic_state=clinic_state : self.doctorListFilter(clinic_id, clinic_name, clinic_state))
+                view_more_button = tk.Button(clinic_frame, text="View More",bg="#0275DD", fg="#ffffff", command=lambda clinic_id=clinic_id, clinic_name=clinic_name, clinic_state=clinic_state : [self.doctorListFilter(clinic_id, clinic_name, clinic_state), my_canvas.yview_moveto(0)])
                 view_more_button.grid(row=2, column=count, columnspan=2, padx=5, pady=5)
 
                 count += 1
@@ -309,7 +313,7 @@ class PatientPage(tk.Frame):
                 clinic_name = doctor_data.get('clinic_name')
                 clinic_state = doctor_data.get('clinic_state')
 
-        # Start Filter Part - Filter by Doctor Specialty
+        # Create font style
         bold14 = Font(self.master, size=14, weight=BOLD) 
         bold12 = Font(self.master, size=12, weight=BOLD)
         label = tk.Label(self, text=f"Search For {selected_clinic} - {selected_state}'s Doctor Detail", bg="#F6F6E9", font=bold14)
@@ -343,13 +347,24 @@ class PatientPage(tk.Frame):
             tk.Label(info_frame, text=value, font=("Helvetica", 10), bg="#d9d9d9", padx=30, pady=10).grid(row=i, column=1, sticky="w")
 
     def makeAppointment(self):
-        pass
+        self.clearClinicInfo()  
+        self.clearFilters()
+
+        # Create font style
+        bold14 = Font(self.master, size=14, weight=BOLD) 
+        bold12 = Font(self.master, size=12, weight=BOLD)
+        label = tk.Label(self, text="Reserve Your Time Slot", bg="#F6F6E9", font=bold14)
+        label.grid(row=0, column=0, padx=20, pady=10, sticky="w")
 
     def viewPrescriptionHistory(self):
         pass
 
     def appointmentRequest(self):
         pass      
+
+    def logout(self):
+        start_login()
+        self.master.quit()
 
 # Main Execution
 if __name__ == "__main__":
@@ -375,7 +390,7 @@ if __name__ == "__main__":
     main_frame.pack(fill=tk.BOTH, expand=1)
 
     # Create a canvas inside the main frame
-    my_canvas = tk.Canvas(main_frame, bg="#f6f6e9", height=600)
+    my_canvas = tk.Canvas(main_frame, bg="#f6f6e9")
     my_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
 
     # Add a vertical scrollbar to the canvas
@@ -386,7 +401,7 @@ if __name__ == "__main__":
     my_canvas.configure(yscrollcommand=my_scrollbar_vertival.set)
 
     # Create another frame inside the canvas
-    second_frame = tk.Frame(my_canvas, bg="#f6f6e9", width=1200, height=600)
+    second_frame = tk.Frame(my_canvas, bg="#f6f6e9", width=1200)
 
     # Add that new frame to a window in the canvas
     my_canvas.create_window((0,0), window=second_frame, anchor="nw")
@@ -411,6 +426,9 @@ if __name__ == "__main__":
 
     appointment_request_btn = tk.Button(nav_bar, text="Appointment Request", command=app.appointmentRequest)
     appointment_request_btn.pack(side="left", fill="x")
+
+    logout_btn = tk.Button(nav_bar, text="Logout", command=app.logout)
+    logout_btn.pack(side="left", fill="x")
 
     app.pack(fill="both", expand=True)  # Make the LoginPage fill the entire window
     app.searchClinic()
