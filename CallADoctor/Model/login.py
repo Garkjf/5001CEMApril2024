@@ -187,15 +187,20 @@ class LoginPage(tk.Frame):
             messagebox.showerror("Error", "Invalid username or password")
 
     def register(self):
+        # close the current window
+        self.master.destroy()
         start_registration()
 
     def patientScreen(self):
+        self.master.destroy()
         start_patient()   
 
     def doctorScreen(self):
+        self.master.destroy()
         start_doctor()
     
     def adminScreen(self):
+        self.master.destroy()
         start_admin()
 
 # Main Execution

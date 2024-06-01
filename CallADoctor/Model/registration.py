@@ -224,13 +224,15 @@ class RegistrationPage(tk.Frame):
         })  
     
     def login(self):
+        # close the current window
+        self.master.destroy()
         start_login()
 
 # Main Execution
 if __name__ == "__main__":
     root = tk.Tk()  # Create a new Tk root window
     root.title("Call a Doctor")  # Set the title of the window
-    root.geometry("750x750")
+    root.geometry("750x550")
     app = RegistrationPage(root)  # Pass the root window to your LoginPage class
     app.pack(fill="both", expand=True)  # Make the LoginPage fill the entire window
     root.mainloop()  # Start the Tkinter event loop
