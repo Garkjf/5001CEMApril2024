@@ -8,6 +8,7 @@ dir = os.path.dirname(__file__)
 
 serviceAccountKeyFile = os.path.join(dir, '../calladoctor-serviceAccountKey.json')
 logoImageFile = os.path.join(dir, '../Images/CallADoctor-logo-small.png')
+backIconImage = os.path.join(dir, '../Images/back-icon.png')
 
 class DoctorPage(tk.Frame):
     def __init__(self, parent):
@@ -15,34 +16,31 @@ class DoctorPage(tk.Frame):
         self.pack(fill=tk.BOTH, expand=True)
         cred = credentials.Certificate(serviceAccountKeyFile)
         initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
-
-        # Get a reference to the clinics node in the database
-        patients_ref = db.reference('patients')
-
-        # Retrieve the clinic data
-        self.patients = patients_ref.get()
-
-        bold14 = Font(self.master, size=14, weight=BOLD) 
-        label = tk.Label(self, text="Search For Patient", font=bold14, background="#9AB892")
-        label.grid(row=0, column=0, padx=20, pady=10, sticky="w")
-
-        self.patient_name_entry = tk.Entry(self)
-        self.patient_name_entry.grid(row=1, column=0, padx=20, pady=10, sticky="W")
-
-        submit_button = tk.Button(self, text="Search", bg="#0275DD", fg="#ffffff", command=self.search_patient)
-        # command=self.search_patient
-        submit_button.grid(row=1, column=1, padx=20, pady=10, sticky="w")
+        
+        self.patients = db.reference('patients').get()
+        self.bold14 = Font(self.master, size=14, weight=BOLD)
 
         self.listPatients(self.patients)
 
     def listPatients(self, patients):
-        # Clear the clinic information
-        self.clearPatientInfo()
+        self.clearPage()
+
+        top_frame = tk.Frame(self, bg="#9AB892")
+        top_frame.grid(column=0, row=0, sticky="w")
+        label = tk.Label(top_frame, text="Search For Patient", font=self.bold14, background="#9AB892")
+        label.grid(row=0, column=0, padx=20, pady=10, sticky="w")
+
+        self.patient_name_entry = tk.Entry(top_frame)
+        self.patient_name_entry.grid(row=1, column=0, padx=20, pady=10, sticky="W")
+
+        submit_button = tk.Button(top_frame, text="Search", bg="#0275DD", fg="#ffffff", 
+                                  command=self.search_patient)
+        submit_button.grid(row=1, column=1, padx=20, pady=10, sticky="w")
 
         row = tk.Frame(self, bg="#9AB892")
-        row.grid(row=2, column=0, columnspan=2)
+        row.grid(row=1, column=0, columnspan=2)
 
-        for count, patient in enumerate(patients.values(), 0):
+        for count, (patient_id, patient) in enumerate(patients.items()):
             # Frame for the patient
             patient_frame = tk.Frame(row, borderwidth=2, relief="groove", width=200, height=100)
             patient_frame.grid(row=count//4, column=count%4, padx=10, pady=30, sticky="w")
@@ -50,17 +48,16 @@ class DoctorPage(tk.Frame):
             name_label = tk.Label(patient_frame, text=f"Patient Name: {patient.get('username')}")
             name_label.grid(row=0, column=0, padx=20, sticky="w")
 
-            view_button = tk.Button(patient_frame, text="View", bg="#0275DD", fg="#ffffff")
+            view_button = tk.Button(patient_frame, text="View", bg="#0275DD", fg="#ffffff", command = 
+                                    lambda: self.showPatientPrescriptions(patient_id))
             view_button.grid(row=0, column=1, padx=10, pady=5, sticky="w")
 
             email_label = tk.Label(patient_frame, text=f"Email: {patient.get('email')}")
             email_label.grid(row=1, column=0, padx=20, sticky="w")
 
-    def clearPatientInfo(self):
+    def clearPage(self):
         # Clear the patient information
-        for widget in self.winfo_children():
-            if isinstance(widget, tk.Frame):
-                widget.destroy()
+        [widget.destroy() for widget in self.winfo_children() if isinstance(widget, tk.Frame)]
 
     def search_patient(self):
         # Function to handle the search functionality
@@ -74,6 +71,42 @@ class DoctorPage(tk.Frame):
         patients = dict(filter(lambda patient: search_key in patient[1].get('username'), 
                                self.patients.items()))
         self.listPatients(patients)
+
+    def handleViewPatient(self, patient_id):
+        return lambda: self.showPatientPrescriptions(patient_id)
+
+    def showPatientPrescriptions(self, patient_id):
+        self.clearPage()
+
+        top_frame = tk.Frame(self, bg="#9AB892")
+        top_frame.grid(column=0, row=0, sticky="w")
+
+        # Load the back icon
+        back_icon = tk.PhotoImage(file=backIconImage)
+        back_icon = back_icon.subsample(20, 20)
+
+        back_button = tk.Button(top_frame, image=back_icon, 
+                                command=lambda: self.listPatients(self.patients))
+        back_button.image = back_icon
+        back_button.grid(row=0, column=0, pady=10, padx=10, sticky="w")
+
+        patient_info_frame = tk.Frame(top_frame, bg="#ffffff")
+        patient_info_frame.grid(row=1, column=0, padx=20)
+
+        patient = self.patients.get(patient_id)
+        
+        title_label = tk.Label(patient_info_frame, text="Patient Information", padx=10, pady=10,
+                               font=self.bold14, bg="#ffffff")
+        title_label.grid(row=0, column=0, sticky="w")
+
+        patient_info = [f"Patient Name: {patient.get('username')}", 
+                        f"Email: {patient.get('email')}",
+                        f"Phone Number: {patient.get('phone')}"]
+        
+        for row, patient_info in enumerate(patient_info, 1):
+            tk.Label(patient_info_frame, text=patient_info, padx=10, bg="#ffffff")\
+            .grid(row=row, column=0, sticky="w")
+
 
 if __name__ == "__main__":
     root = tk.Tk()
