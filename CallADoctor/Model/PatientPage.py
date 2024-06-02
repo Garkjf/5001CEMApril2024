@@ -55,7 +55,7 @@ class PatientPage(tk.Frame):
         clinic_state_options = ["All State"]
         clinic_states = set()
 
-        for clinic_id, clinic_data in clinics.items():
+        for _, clinic_data in clinics.items():
             clinic_name = clinic_data.get('clinic_name')
             clinic_state = clinic_data.get('clinic_state')
             if clinic_name not in clinic_names:
@@ -298,10 +298,10 @@ class PatientPage(tk.Frame):
         print("viewDoctorInformation called")  # Debugging print statement
 
         # Get a reference to the doctors node in the database
-        docotrs_ref = db.reference('doctors')
+        doctors_ref = db.reference('doctors')
 
         # Retrieve the clinic data
-        doctors = docotrs_ref.get()
+        doctors = doctors_ref.get()
 
         # Retrieve the clinic data
         for doctor_id, doctor_data in doctors.items():

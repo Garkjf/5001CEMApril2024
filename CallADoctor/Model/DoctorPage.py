@@ -42,7 +42,7 @@ class DoctorPage(tk.Frame):
         row = tk.Frame(self, bg="#9AB892")
         row.grid(row=2, column=0, columnspan=2)
 
-        for count, (_, patient) in enumerate(patients.items(), 0):
+        for count, patient in enumerate(patients.values(), 0):
             # Frame for the patient
             patient_frame = tk.Frame(row, borderwidth=2, relief="groove", width=200, height=100)
             patient_frame.grid(row=count//4, column=count%4, padx=10, pady=30, sticky="w")
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     root = tk.Tk()
     root.title("Call a Doctor - Doctor Page")
     root.geometry("1200x600")
-    root.configure(background="#9AB892")
+    root.configure(background="#f6f6e9")
 
     # Navigation bar
     logo = tk.PhotoImage(file=logoImageFile)
