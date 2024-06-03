@@ -18,6 +18,9 @@ class DoctorPage(tk.Frame):
         initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
         
         self.patients = db.reference('patients').get()
+        self.prescriptions = db.reference('prescriptions').get()
+        self.doctors = db.reference('doctors').get()
+
         self.bold14 = Font(self.master, size=14, weight=BOLD)
 
         self.listPatients(self.patients)
@@ -49,7 +52,7 @@ class DoctorPage(tk.Frame):
             name_label.grid(row=0, column=0, padx=20, sticky="w")
 
             view_button = tk.Button(patient_frame, text="View", bg="#0275DD", fg="#ffffff", command = 
-                                    lambda: self.showPatientPrescriptions(patient_id))
+                                    self.handleViewPatient(patient_id))
             view_button.grid(row=0, column=1, padx=10, pady=5, sticky="w")
 
             email_label = tk.Label(patient_frame, text=f"Email: {patient.get('email')}")
@@ -106,6 +109,32 @@ class DoctorPage(tk.Frame):
         for row, patient_info in enumerate(patient_info, 1):
             tk.Label(patient_info_frame, text=patient_info, padx=10, bg="#ffffff")\
             .grid(row=row, column=0, sticky="w")
+        
+        prescriptions = dict(filter(lambda entry: str(entry[1].get('patientID')) == patient_id, 
+                                    self.prescriptions.items()))
+        if not prescriptions:
+            return
+        # Create table for prescriptions
+        prescription_table = tk.Frame(self)
+        prescription_table.grid(row=2, column=0, padx=20, pady=20)
+
+        columnNames = ["Doctor Name", "Specialist", "Action"]
+        for column, name in enumerate(columnNames):
+            e = tk.Label(prescription_table, highlightbackground="black", highlightthickness=1,
+                         padx=20, borderwidth=2, text=name, font=('Arial', 12, BOLD))
+            e.grid(row=0, column=column)
+        
+        for row, (prescription_id, prescription) in enumerate(prescriptions.items(), 1):
+            doctor = self.doctors.get(prescription.get('doctorID'))
+            e = tk.Label(prescription_table, padx=20, text=doctor.get('username'))
+            e.grid(row=row, column=0)
+
+            e = tk.Label(prescription_table, padx=20, text=doctor.get('specialist'))
+            e.grid(row=row, column=1)
+
+            view_button = tk.Button(prescription_table, padx=20, pady=5,
+                                    text="View", bg="#0275DD", fg="#ffffff")
+            view_button.grid(row=row, column=2)
 
 
 if __name__ == "__main__":
