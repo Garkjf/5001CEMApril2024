@@ -373,21 +373,18 @@ class PatientPage(tk.Frame):
 
             self.label = tk.Label(self, text="Name:", bg="#f6f6e9", font=bold10)
             self.label.grid(row=2, column=0, padx=20, sticky="w") 
-            self.username_entry = tk.Entry(self, width=30)
-            self.username_entry.insert(0, username)
-            self.username_entry.grid(row=3, column=0, padx=20, pady=10, sticky="w")
+            self.user_label = tk.Label(self, text=username, bg="#ffffff", width=30, border=2, relief="groove", state="disabled")
+            self.user_label.grid(row=3, column=0, padx=20, pady=10, sticky="w")
 
             self.label = tk.Label(self, text="Email:", bg="#f6f6e9", font=bold10)
             self.label.grid(row=4, column=0, padx=20, sticky="w") 
-            self.email_entry = tk.Entry(self, width=30)
-            self.email_entry.insert(0, email)
-            self.email_entry.grid(row=5, column=0, padx=20, pady=10, sticky="w")
+            self.email_label = tk.Label(self, text=email, bg="#ffffff", width=30, border=2, relief="groove", state="disabled")
+            self.email_label.grid(row=5, column=0, padx=20, pady=10, sticky="w")
 
             self.label = tk.Label(self, text="Phone Number:", bg="#f6f6e9", font=bold10)
             self.label.grid(row=2, column=1, padx=20, sticky="w") 
-            self.phone_entry = tk.Entry(self, width=30)
-            self.phone_entry.insert(0, phone)
-            self.phone_entry.grid(row=3, column=1, padx=20, pady=10, sticky="w")
+            self.phone_label = tk.Label(self, text=phone, bg="#ffffff", width=30, border=2, relief="groove", state="disabled")
+            self.phone_label.grid(row=3, column=1, padx=20, pady=10, sticky="w")
 
             clinic_ref = db.reference('clinicAdmins')
             clinics = clinic_ref.get()

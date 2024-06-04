@@ -172,6 +172,10 @@ class RegistrationPage(tk.Frame):
             messagebox.showerror("Error", "Username is required")
             return
         
+        elif not all(char.isalpha() or char.isspace() for char in username):
+            messagebox.showerror("Error", "Username should only contain letters only!")
+            return
+        
         if email == "":
             messagebox.showerror("Error", "Email is required")
             return
@@ -206,6 +210,7 @@ class RegistrationPage(tk.Frame):
             if role == 'Patient':
                 self.save_patient(role, ic_passport_id, username, email, phone, password)
                 messagebox.showinfo("Success", "Patient registration successful")
+                self.login()
             else:
                 messagebox.showerror("Error", "Invalid role")
         except Exception as e:
