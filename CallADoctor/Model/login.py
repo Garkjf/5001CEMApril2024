@@ -165,16 +165,22 @@ class LoginPage(tk.Frame):
             for key, value in user_data.items():
                 if role == "Patient":
                     if value['ic_passport_id'] == ic_passport_id and value['password'] == password:
+                        with open('login_data.txt', 'w') as f:
+                            f.write(self.ic_passport_id_entry.get())
                         messagebox.showinfo("Success", "Login Successful")
                         return self.patientScreen()
 
                 elif role == "Doctor":
                     if value['ic_passport_id'] == ic_passport_id and value['password'] == password and clinic == value['clinic_name'] and clinic_state == value['clinic_state']:
+                        with open('login_data.txt', 'w') as f:
+                            f.write(self.ic_passport_id_entry.get())
                         messagebox.showinfo("Success", "Login Successful")
                         return self.doctorScreen()
                     
                 elif role == "Clinic Admin":
                     if value['ic_passport_id'] == ic_passport_id and value['password'] == password and clinic == value['clinic_name'] and clinic_state == value['clinic_state']:
+                        with open('login_data.txt', 'w') as f:
+                            f.write(self.ic_passport_id_entry.get())
                         messagebox.showinfo("Success", "Login Successful")
                         return self.clinicAdminScreen()
                 else:
@@ -193,7 +199,7 @@ class LoginPage(tk.Frame):
 
     def patientScreen(self):
         self.master.destroy()
-        start_patient()   
+        start_patient()  
 
     def doctorScreen(self):
         self.master.destroy()

@@ -1,9 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-import firebase_admin
 from firebase_admin import credentials, initialize_app ,db
 from tkinter.font import BOLD, Font
+from tkcalendar import Calendar
+from datetime import datetime
+import pytz
 import os
 import subprocess
 import PatientPage
@@ -171,7 +173,6 @@ class PatientPage(tk.Frame):
     def doctorListFilter(self, clinic_id, selected_clinic, selected_state):
         self.clearClinicInfo()
         self.clearFilters()
-        print("doctorListFilter called")
 
          # Start Filter Part - Filter by Doctor Specialty
         bold14 = Font(self.master, size=14, weight=BOLD) 
@@ -237,8 +238,6 @@ class PatientPage(tk.Frame):
         #  create font style
         bold12 = Font(self.master, size=12, weight=BOLD, family="Helvetica")
         
-        print("viewDoctorList called")  # Debugging print statement
-
         # Get the selected clinic state and clinic name
         print(f"Selected state: {selected_state}, Selected clinic: {selected_clinic}")  # Debugging print statement
 
@@ -353,8 +352,223 @@ class PatientPage(tk.Frame):
         # Create font style
         bold14 = Font(self.master, size=14, weight=BOLD) 
         bold12 = Font(self.master, size=12, weight=BOLD)
+        bold10 = Font(self.master, size=10, weight=BOLD)
         label = tk.Label(self, text="Reserve Your Time Slot", bg="#F6F6E9", font=bold14)
         label.grid(row=0, column=0, padx=20, pady=10, sticky="w")
+        with open('login_data.txt', 'r') as f:
+            ic_passport_id = f.read().strip()
+
+        # get patient information
+        patient_ref = db.reference('patients/' + ic_passport_id)
+        patient_data = patient_ref.get()
+
+        label = tk.Label(self, text="Patient Information", bg="#F6F6E9", font=bold12)
+        label.grid(row=1, column=0, padx=20, pady=10, sticky="w")
+
+        if isinstance(patient_data, dict):
+            username = patient_data['username']
+            email = patient_data['email']
+            phone = patient_data['phone']
+
+            self.label = tk.Label(self, text="Name:", bg="#f6f6e9", font=bold10)
+            self.label.grid(row=2, column=0, padx=20, sticky="w") 
+            self.username_entry = tk.Entry(self, width=30)
+            self.username_entry.insert(0, username)
+            self.username_entry.grid(row=3, column=0, padx=20, pady=10, sticky="w")
+
+            self.label = tk.Label(self, text="Email:", bg="#f6f6e9", font=bold10)
+            self.label.grid(row=4, column=0, padx=20, sticky="w") 
+            self.email_entry = tk.Entry(self, width=30)
+            self.email_entry.insert(0, email)
+            self.email_entry.grid(row=5, column=0, padx=20, pady=10, sticky="w")
+
+            self.label = tk.Label(self, text="Phone Number:", bg="#f6f6e9", font=bold10)
+            self.label.grid(row=2, column=1, padx=20, sticky="w") 
+            self.phone_entry = tk.Entry(self, width=30)
+            self.phone_entry.insert(0, phone)
+            self.phone_entry.grid(row=3, column=1, padx=20, pady=10, sticky="w")
+
+            clinic_ref = db.reference('clinicAdmins')
+            clinics = clinic_ref.get()
+
+        # get clinic information
+        clinics_ref = db.reference('clinicAdmins')
+
+        clinics = clinics_ref.get()
+
+        clinic_options = ["Choose Clinic"]
+        clinic_names = set()
+
+        clinic_state_options = ["Choose Clinic State"]
+        clinic_states = set()
+        
+        for clinic_id, clinic_data in clinics.items():
+            clinic_name = clinic_data.get('clinic_name')
+            clinic_state = clinic_data.get('clinic_state')
+            if clinic_name not in clinic_names:
+                clinic_options.append(clinic_name)
+                clinic_names.add(clinic_name)
+            if clinic_state not in clinic_states:
+                clinic_state_options.append(clinic_state)
+                clinic_states.add(clinic_state)
+
+        label = tk.Label(self, text="Clinic Information", bg="#f6f6e9", font=bold12)
+        label.grid(row=7, column=0, padx=20, pady=10, sticky="w")
+
+        # clinic name selection
+        self.clinic_var = tk.StringVar()
+        self.label = tk.Label(self, text="Select Clinic", bg="#f6f6e9", font=bold10)
+        self.label.grid(row=8, column=0, padx=20, sticky="w")
+        self.clinic_dropdown = ttk.Combobox(self, textvariable=self.clinic_var, values=clinic_options, state="readonly", width=30)
+        self.clinic_dropdown.current(0)  
+        self.clinic_dropdown.grid(row=9, column=0, padx=20, sticky="w")
+        self.clinic_dropdown.bind("<<ComboboxSelected>>", self.check_clinic_selection)
+
+        # Clinic state Selection
+        self.clinic_state_var = tk.StringVar()
+        self.label = tk.Label(self, text="Select Clinic State", bg="#f6f6e9", font=bold10)
+        self.label.grid(row=8, column=1, padx=20, sticky="w")  # Changed column to 1
+        self.clinic_state_dropdown = ttk.Combobox(self, textvariable=self.clinic_state_var, values=clinic_state_options, state="readonly")
+        self.clinic_state_dropdown.current(0)  #
+        self.clinic_state_dropdown.grid(row=9, column=1, padx=20, sticky="w") 
+        self.clinic_state_dropdown.bind("<<ComboboxSelected>>", self.check_clinic_state_selection)
+
+        # Get doctor information
+        doctors_ref = db.reference('doctors')
+
+        doctors = doctors_ref.get()
+
+        # get the doctor data based on the selected clinic state and clinic name
+        selected_clinic_state = self.clinic_state_var.get()
+        selected_clinic_name = self.clinic_var.get()
+
+        filtered_doctors = [doctor for doctor in doctors.values() if doctor['clinic_state'] == selected_clinic_state and doctor['clinic_name'] == selected_clinic_name]
+
+        label = tk.Label(self, text="Doctor Information", bg="#f6f6e9", font=bold12)
+        label.grid(row=1, column=3, padx=20, pady=10, sticky="w")
+
+        # Get the names and specialties of the filtered doctors
+        doctor_names = [doctor['username'] for doctor in filtered_doctors]
+        doctor_names = ["Choose Doctor"]
+        doctor_specialties = [doctor['specialist'] for doctor in filtered_doctors]
+        doctor_specialties = ["Choose Specialty"]
+
+        self.doctor_name_var = tk.StringVar()
+        self.label = tk.Label(self, text="Select Doctor", bg="#f6f6e9", font=bold10)
+        self.label.grid(row=2, column=3, padx=20, sticky="w")
+        self.doctor_name_dropdown = ttk.Combobox(self, textvariable=self.doctor_name_var, values=doctor_names, state="readonly")
+        self.doctor_name_dropdown.current(0)
+        self.doctor_name_dropdown.grid(row=3, column=3, padx=20, pady=10, sticky="w", font=bold10)
+        self.doctor_name_dropdown.bind("<<ComboboxSelected>>", self.check_doctor_name_selection)
+
+        self.doctor_specialty_var = tk.StringVar()
+        self.label = tk.Label(self, text="Select Doctor Specialty", bg="#f6f6e9")
+        self.label.grid(row=2, column=4, padx=20, sticky="w")
+        self.doctor_specialty_dropdown = ttk.Combobox(self, textvariable=self.doctor_specialty_var, values=doctor_specialties, state="readonly")
+        self.doctor_specialty_dropdown.current(0)
+        self.doctor_specialty_dropdown.grid(row=3, column=4, padx=20, pady=10, sticky="w")
+        self.doctor_specialty_dropdown.bind("<<ComboboxSelected>>", self.check_doctor_specialty_selection)
+        
+        self.label = tk.Label(self, text="Select Appointment Date", bg="#f6f6e9", font=bold10)
+        self.label.grid(row=4, column=3, padx=20, sticky="w")
+        self.appointment_date_entry = Calendar(self)
+        self.appointment_date_entry.grid(row=5, column=3, padx=20, pady=10, sticky="w", rowspan=5)
+
+        self.label = tk.Label(self, text="Select Appointment Time Slot", bg="#f6f6e9", font=bold10)
+        self.label.grid(row=4, column=4, padx=20, sticky="w")
+        self.appointment_time_entry = ttk.Combobox(self, values=["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"])
+        self.appointment_time_entry.current(0)
+        self.appointment_time_entry.grid(row=5, column=4, padx=20, pady=10, sticky="w")
+
+        
+        # Create save button
+        save_button = tk.Button(self, text="submit", command=self.save_appointment, width=20, bg="#0275DD", fg="#ffffff")
+        save_button.grid(row=10, columnspan=5, pady=20, padx=20)
+
+    def check_clinic_selection(self, event):
+        selected_clinic = self.clinic_var.get()
+        selected_clinic_state = self.clinic_state_var.get()
+        if selected_clinic == "Choose Clinic":
+            messagebox.showerror("Error", "Please select a clinic")
+        else:
+            self.update_doctor_dropdown(selected_clinic, selected_clinic_state)
+
+    def check_clinic_state_selection(self, event):
+        selected_clinic = self.clinic_var.get()
+        selected_clinic_state = self.clinic_state_var.get()
+        if selected_clinic_state == "Choose Clinic State":
+            messagebox.showerror("Error", "Please select a clinic state")
+        else:
+            self.update_doctor_dropdown(selected_clinic, selected_clinic_state) 
+    
+    def check_doctor_name_selection(self, event):
+        selection = self.doctor_name_var.get()
+        if selection == "Choose Doctor":
+            messagebox.showerror("Error", "Please select a doctor")
+        elif selection == "No doctors available":
+            messagebox.showerror("Error", "No doctors available for the selected clinic")
+    
+    def check_doctor_specialty_selection(self, event):
+        selection = self.doctor_specialty_var.get()
+        if selection == "Choose Specialty":
+            messagebox.showerror("Error", "Please select a doctor specialty")
+        elif selection == "No specialties available":
+            messagebox.showerror("Error", "No specialties available for the selected clinic")
+
+    def update_doctor_dropdown(self, selected_clinic_name, selected_clinic_state):
+        doctors_ref = db.reference('doctors')
+        doctors = doctors_ref.get()
+
+        filtered_doctors = [doctor for doctor in doctors.values() if doctor['clinic_state'] == selected_clinic_state and doctor['clinic_name'] == selected_clinic_name]
+
+        # Get the doctor names and specialties of the filtered doctors
+        doctor_names = [doctor['username'] for doctor in filtered_doctors]
+        doctor_specialties = list(set(doctor['specialist'] for doctor in filtered_doctors))
+
+        # Update the doctor name dropdown
+        self.doctor_name_dropdown['values'] = doctor_names if doctor_names else ["No doctors available"]
+        self.doctor_name_dropdown.current(0)
+
+        # Update the doctor specialty dropdown
+        self.doctor_specialty_dropdown['values'] = doctor_specialties if doctor_specialties else ["No specialties available"]
+        self.doctor_specialty_dropdown.current(0)
+
+    def save_appointment(self):
+        try:
+            timestamp = datetime.now(pytz.timezone('Asia/Kuala_Lumpur'))
+            formatted_timestamp = timestamp.strftime('%d/%m/%Y %H:%M')
+            username = self.username_entry.get()
+            email = self.email_entry.get()
+            phone = self.phone_entry.get()
+            clinic_name = self.clinic_var.get()
+            clinic_state = self.clinic_state_var.get()
+            doctor_name = self.doctor_name_var.get()
+            specialty = self.doctor_specialty_var.get()
+            appointment_date = self.appointment_date_entry.get()
+            appointment_time = self.appointment_time_entry.get()
+
+            ref = db.reference('appointment')
+            new_appointment_ref = ref.push()  # generate a unique key and return a new reference
+
+            new_appointment_ref.set({
+                'appointmentNo': new_appointment_ref.key,  # unique key as the appointmentNo
+                'username': username,
+                'email': email,
+                'phone': phone,
+                'clinic_name': clinic_name,
+                'clinic_state': clinic_state,
+                'doctor_name': doctor_name,
+                'specialty': specialty,
+                'appointment_date': appointment_date,
+                'appointment_time': appointment_time,
+                'created_at': formatted_timestamp,
+                'updated_at': formatted_timestamp,
+                'status': 'Pending'
+            }) 
+            messagebox.showinfo("Success", "Appointment saved successfully")  
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            messagebox.showerror("Error", "An error occurred while saving the appointment")
 
     def viewPrescriptionHistory(self):
         pass
