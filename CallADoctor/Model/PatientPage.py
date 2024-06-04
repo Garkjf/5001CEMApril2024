@@ -167,7 +167,7 @@ class PatientPage(tk.Frame):
     def clearFilters(self):
         # Clear the filters and search button from the searchClinic function/ ViewDoctorList function
         for widget in self.winfo_children():
-            if isinstance(widget, ttk.Combobox) or isinstance(widget, tk.Label) or isinstance(widget, tk.Button):
+            if isinstance(widget, ttk.Combobox) or isinstance(widget, tk.Label) or isinstance(widget, tk.Button) or isinstance(widget, Calendar) or isinstance(widget, tk.Entry):
                 widget.destroy()
 
     def doctorListFilter(self, clinic_id, selected_clinic, selected_state):
@@ -453,22 +453,22 @@ class PatientPage(tk.Frame):
         doctor_specialties = [doctor['specialist'] for doctor in filtered_doctors]
         doctor_specialties = ["Choose Specialty"]
 
-        self.doctor_name_var = tk.StringVar()
-        self.label = tk.Label(self, text="Select Doctor", bg="#f6f6e9", font=bold10)
-        self.label.grid(row=2, column=3, padx=20, sticky="w")
-        self.doctor_name_dropdown = ttk.Combobox(self, textvariable=self.doctor_name_var, values=doctor_names, state="readonly")
-        self.doctor_name_dropdown.current(0)
-        self.doctor_name_dropdown.grid(row=3, column=3, padx=20, pady=10, sticky="w", font=bold10)
-        self.doctor_name_dropdown.bind("<<ComboboxSelected>>", self.check_doctor_name_selection)
-
         self.doctor_specialty_var = tk.StringVar()
-        self.label = tk.Label(self, text="Select Doctor Specialty", bg="#f6f6e9")
-        self.label.grid(row=2, column=4, padx=20, sticky="w")
+        self.label = tk.Label(self, text="Select Doctor Specialty", bg="#f6f6e9", font=bold10)
+        self.label.grid(row=2, column=3, padx=20, sticky="w")
         self.doctor_specialty_dropdown = ttk.Combobox(self, textvariable=self.doctor_specialty_var, values=doctor_specialties, state="readonly")
         self.doctor_specialty_dropdown.current(0)
-        self.doctor_specialty_dropdown.grid(row=3, column=4, padx=20, pady=10, sticky="w")
+        self.doctor_specialty_dropdown.grid(row=3, column=3, padx=20, pady=10, sticky="w")
         self.doctor_specialty_dropdown.bind("<<ComboboxSelected>>", self.check_doctor_specialty_selection)
-        
+
+        self.doctor_name_var = tk.StringVar()
+        self.label = tk.Label(self, text="Select Doctor", bg="#f6f6e9", font=bold10)
+        self.label.grid(row=2, column=4, padx=20, sticky="w")
+        self.doctor_name_dropdown = ttk.Combobox(self, textvariable=self.doctor_name_var, values=doctor_names, state="readonly")
+        self.doctor_name_dropdown.current(0)
+        self.doctor_name_dropdown.grid(row=3, column=4, padx=20, pady=10, sticky="w")
+        self.doctor_name_dropdown.bind("<<ComboboxSelected>>", self.check_doctor_name_selection)
+
         self.label = tk.Label(self, text="Select Appointment Date", bg="#f6f6e9", font=bold10)
         self.label.grid(row=4, column=3, padx=20, sticky="w")
         self.appointment_date_entry = Calendar(self)
@@ -476,11 +476,11 @@ class PatientPage(tk.Frame):
 
         self.label = tk.Label(self, text="Select Appointment Time Slot", bg="#f6f6e9", font=bold10)
         self.label.grid(row=4, column=4, padx=20, sticky="w")
-        self.appointment_time_entry = ttk.Combobox(self, values=["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"])
+        self.appointment_time_entry = ttk.Combobox(self, values=["Choose Time Slot", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"])
         self.appointment_time_entry.current(0)
         self.appointment_time_entry.grid(row=5, column=4, padx=20, pady=10, sticky="w")
+        self.appointment_time_entry.bind("<<ComboboxSelected>>", self.check_time_selection)
 
-        
         # Create save button
         save_button = tk.Button(self, text="submit", command=self.save_appointment, width=20, bg="#0275DD", fg="#ffffff")
         save_button.grid(row=10, columnspan=5, pady=20, padx=20)
@@ -491,7 +491,7 @@ class PatientPage(tk.Frame):
         if selected_clinic == "Choose Clinic":
             messagebox.showerror("Error", "Please select a clinic")
         else:
-            self.update_doctor_dropdown(selected_clinic, selected_clinic_state)
+            self.update_doctor_specialty_dropdown(selected_clinic, selected_clinic_state)
 
     def check_clinic_state_selection(self, event):
         selected_clinic = self.clinic_var.get()
@@ -499,39 +499,54 @@ class PatientPage(tk.Frame):
         if selected_clinic_state == "Choose Clinic State":
             messagebox.showerror("Error", "Please select a clinic state")
         else:
-            self.update_doctor_dropdown(selected_clinic, selected_clinic_state) 
-    
-    def check_doctor_name_selection(self, event):
-        selection = self.doctor_name_var.get()
-        if selection == "Choose Doctor":
-            messagebox.showerror("Error", "Please select a doctor")
-        elif selection == "No doctors available":
-            messagebox.showerror("Error", "No doctors available for the selected clinic")
+            self.update_doctor_specialty_dropdown(selected_clinic, selected_clinic_state) 
     
     def check_doctor_specialty_selection(self, event):
-        selection = self.doctor_specialty_var.get()
-        if selection == "Choose Specialty":
+        selected_clinic = self.clinic_var.get()
+        selected_clinic_state = self.clinic_state_var.get()
+        selected_specialty = self.doctor_specialty_var.get()
+        selected_doctor = self.doctor_name_var.get()
+        if selected_specialty == "Choose Specialty":
             messagebox.showerror("Error", "Please select a doctor specialty")
-        elif selection == "No specialties available":
+            self.doctor_name_dropdown['values'] = ["Choose Doctor"]
+            self.doctor_name_dropdown.current(0)
+        elif selected_specialty == "No specialties available":
             messagebox.showerror("Error", "No specialties available for the selected clinic")
+        else:
+            self.update_doctor_dropdown(selected_clinic, selected_clinic_state, selected_specialty)
+    
+    def check_doctor_name_selection(self, event):
+        doctor_name = self.doctor_name_var.get()
+        if doctor_name == "Choose Doctor":
+            messagebox.showerror("Error", "Please select a doctor")
+        elif doctor_name == "No doctors available":
+            messagebox.showerror("Error", "No doctors available for the selected clinic")
 
-    def update_doctor_dropdown(self, selected_clinic_name, selected_clinic_state):
+    def update_doctor_specialty_dropdown(self, selected_clinic_name, selected_clinic_state):
+        doctors_ref = db.reference('doctors')
+        doctors = doctors_ref.get()
+        
+        # Get the doctor specialties
+        filtered_specialties = [doctor for doctor in doctors.values() if doctor['clinic_state'] == selected_clinic_state and doctor['clinic_name'] == selected_clinic_name]
+        doctor_specialties = sorted(set(doctor['specialist'] for doctor in filtered_specialties))
+        self.doctor_specialty_dropdown['values'] = ["Choose Specialty", *doctor_specialties] if doctor_specialties else ["No specialties available"]
+        self.doctor_specialty_dropdown.current(0)
+
+    def update_doctor_dropdown(self, selected_clinic_name, selected_clinic_state, selected_specialty):
         doctors_ref = db.reference('doctors')
         doctors = doctors_ref.get()
 
-        filtered_doctors = [doctor for doctor in doctors.values() if doctor['clinic_state'] == selected_clinic_state and doctor['clinic_name'] == selected_clinic_name]
-
-        # Get the doctor names and specialties of the filtered doctors
+        # Get the doctor names
+        filtered_doctors = [doctor for doctor in doctors.values() if doctor['clinic_state'] == selected_clinic_state and doctor['clinic_name'] == selected_clinic_name and doctor['specialist'] == selected_specialty]
         doctor_names = [doctor['username'] for doctor in filtered_doctors]
-        doctor_specialties = list(set(doctor['specialist'] for doctor in filtered_doctors))
-
-        # Update the doctor name dropdown
         self.doctor_name_dropdown['values'] = doctor_names if doctor_names else ["No doctors available"]
         self.doctor_name_dropdown.current(0)
 
-        # Update the doctor specialty dropdown
-        self.doctor_specialty_dropdown['values'] = doctor_specialties if doctor_specialties else ["No specialties available"]
-        self.doctor_specialty_dropdown.current(0)
+    def check_time_selection(self, event):
+        selected_time_slot = self.appointment_time_entry.get()
+
+        if selected_time_slot == "Choose Time Slot":
+            messagebox.showerror("Error", "Please select an appointment time slot")
 
     def save_appointment(self):
         try:
@@ -544,28 +559,55 @@ class PatientPage(tk.Frame):
             clinic_state = self.clinic_state_var.get()
             doctor_name = self.doctor_name_var.get()
             specialty = self.doctor_specialty_var.get()
-            appointment_date = self.appointment_date_entry.get()
+            # convert the appointment date to a string dmy format
+            appointment_date = datetime.strptime(self.appointment_date_entry.get_date(), '%d/%m/%y').date()
+            appointment_date_str = appointment_date.strftime('%d/%m/%Y')
+            
             appointment_time = self.appointment_time_entry.get()
+            matching_doctor_found = False
 
-            ref = db.reference('appointment')
-            new_appointment_ref = ref.push()  # generate a unique key and return a new reference
+            doctors_ref = db.reference('doctors')
 
-            new_appointment_ref.set({
-                'appointmentNo': new_appointment_ref.key,  # unique key as the appointmentNo
-                'username': username,
-                'email': email,
-                'phone': phone,
-                'clinic_name': clinic_name,
-                'clinic_state': clinic_state,
-                'doctor_name': doctor_name,
-                'specialty': specialty,
-                'appointment_date': appointment_date,
-                'appointment_time': appointment_time,
-                'created_at': formatted_timestamp,
-                'updated_at': formatted_timestamp,
-                'status': 'Pending'
-            }) 
-            messagebox.showinfo("Success", "Appointment saved successfully")  
+            # Retrieve the clinic data to check if the selected doctor belongs to the selected specialty
+            doctors = doctors_ref.get()
+            for doctor_id, doctor_data in doctors.items():
+                if doctor_data.get('username')  == doctor_name and doctor_data.get('specialist') == specialty:
+                    matching_doctor_found = True
+
+                    ref = db.reference('appointment')
+                    new_appointment_ref = ref.push()  # generate a unique key and return a new reference
+
+                    new_appointment_ref.set({
+                        'appointmentNo': new_appointment_ref.key,  # unique key as the appointmentNo
+                        'username': username,
+                        'email': email,
+                        'phone': phone,
+                        'clinic_name': clinic_name,
+                        'clinic_state': clinic_state,
+                        'doctor_name': doctor_name,
+                        'specialty': specialty,
+                        'appointment_date': appointment_date_str,
+                        'appointment_time': appointment_time,
+                        'created_at': formatted_timestamp,
+                        'updated_at': formatted_timestamp,
+                        'status': 'Pending'
+                    }) 
+                    print("Appointment saved successfully")
+                    messagebox.showinfo("Success", "Appointment apply successfully") 
+                    
+                    # clear the form
+                    self.clinic_var.set("Choose Clinic")
+                    self.clinic_state_var.set("Choose Clinic State")
+                    self.doctor_name_var.set("Choose Doctor")
+                    self.doctor_specialty_var.set("Choose Specialty")
+                    self.appointment_date_entry.selection_set(datetime.now())
+                    self.appointment_time_entry.set("Choose Time Slot")
+                    break
+
+            if not matching_doctor_found:
+                print("Doctor not belong to the selected specialty.")
+                messagebox.showerror("Error", "The Selected Doctor is not belong to the selected specialty. Please select the correct doctor and the specialty.")
+
         except Exception as e:
             print(f"An error occurred: {e}")
             messagebox.showerror("Error", "An error occurred while saving the appointment")
