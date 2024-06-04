@@ -135,7 +135,7 @@ class DoctorPage(tk.Frame):
         columnNames = ["Doctor Name", "Specialist", "Action"]
         for column, name in enumerate(columnNames):
             e = tk.Label(prescription_table, highlightbackground="black", highlightthickness=1,
-                         padx=20, borderwidth=2, text=name, font=('Arial', 12, BOLD))
+                         padx=20, borderwidth=2, text=name, font=("Arial", 12, BOLD))
             e.grid(row=0, column=column)
         
         for row, (prescription_id, prescription) in enumerate(prescriptions.items(), 1):
@@ -173,13 +173,13 @@ class DoctorPage(tk.Frame):
         back_button.grid(row=0, column=0, sticky="w")
 
         main_frame = tk.Frame(self, bg="#ffffff", padx=10, pady=10)
-        main_frame.grid(row=1, column=0)
+        main_frame.grid(row=1, column=0, pady=10)
 
         tk.Label(main_frame, text="Patient Information", font=self.bold14, bg="#ffffff",
-                 padx=10, pady=10).grid(row=0, column=0)
+                 pady=10).grid(row=0, column=0, sticky="w")
         
-        info_frame = tk.Frame(main_frame, bg="#ffffff", padx=10, pady=10)
-        info_frame.grid(row=0, column=0)
+        info_frame = tk.Frame(main_frame, bg="#ffffff", pady=10)
+        info_frame.grid(row=1, column=0, sticky="w")
 
         prescription_info = [
             ("Patient Name", patient.get('username')),
@@ -188,16 +188,39 @@ class DoctorPage(tk.Frame):
             ("Clinic Name", doctor.get('clinic_name')),
             ("Doctor Name", doctor.get('username')),
             ("Doctor Phone Number", doctor.get('phone')),
-            ("Doctor Phone Number", doctor.get('specialist')),
+            ("Specialist", doctor.get('specialist')),
         ]
         
         for i, (label, value) in enumerate(prescription_info):
             column, row = divmod(i, 4)
 
-            label = tk.Label(main_frame, text=f"{label}: {value}", padx=10, pady=10, 
+            label = tk.Label(info_frame, text=f"{label}: {value}", padx=5, pady=5, 
                              bg="#ffffff")
             label.grid(row=row+1, column=column, sticky="w")
+        
+        # Fill information for middle frame
+        middle_frame = tk.Frame(main_frame, bg="#D9D9D9", padx=10, pady=10)
+        middle_frame.grid(row=4, column=0, sticky="w", pady=10)
 
+        prescription_info = [
+            ("Symptoms", prescription.get('symptoms')),
+            ("Diagnosis", prescription.get('diagnosis')),
+            ("Treatment", prescription.get('treatment')),
+        ]
+
+        for i, (label, value) in enumerate(prescription_info):
+            label = tk.Label(middle_frame, text=f"{label}: {value}", padx=5, pady=5, 
+                             bg="#D9D9D9")
+            label.grid(row=i, column=0, sticky="w")
+        
+        tk.Label(main_frame, text="Doctor's Remark", font=self.bold14, bg="#ffffff")\
+            .grid(row=5, column=0, sticky="w")
+        
+        remark_frame = tk.Frame(main_frame, bg="#D9D9D9", padx=10, pady=10)
+        remark_frame.grid(row=6, column=0, sticky="w")
+
+        tk.Label(remark_frame, text=prescription.get("remark"), bg="#D9D9D9")\
+        .grid(row=0, column=0, sticky="w")
 
 if __name__ == "__main__":
     root = tk.Tk()
