@@ -5,6 +5,7 @@ from firebase_admin import credentials, initialize_app ,db
 from tkinter.font import BOLD, Font
 from tkcalendar import Calendar
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import pytz
 import os
 import subprocess
@@ -473,13 +474,28 @@ class PatientPage(tk.Frame):
         self.label.grid(row=4, column=3, padx=20, sticky="w")
         self.appointment_date_entry = Calendar(self)
         self.appointment_date_entry.grid(row=5, column=3, padx=20, pady=10, sticky="w", rowspan=5)
+        self.appointment_date_entry.bind("<<CalendarSelected>>", self.check_date_selection)
 
+        # set the available time slots
+        current_time = datetime.now(pytz.timezone('Asia/Kuala_Lumpur')).time()
+        if current_time.hour >= 17:
+            available_times = ["No Time Slot Available"]
+        else:
+            available_times = ["Choose Time Slot"]
+            for i in range(9, 18):
+                if current_time.hour < i:
+                    if i < 10:
+                        available_times.append(f"0{i}:00")
+                    else:
+                        available_times.append(f"{i}:00")
+
+        self.appointment_time_var = tk.StringVar()
         self.label = tk.Label(self, text="Select Appointment Time Slot", bg="#f6f6e9", font=bold10)
         self.label.grid(row=4, column=4, padx=20, sticky="w")
-        self.appointment_time_entry = ttk.Combobox(self, values=["Choose Time Slot", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"])
+        self.appointment_time_entry = ttk.Combobox(self, textvariable=self.appointment_time_var, values=available_times, state="readonly")
         self.appointment_time_entry.current(0)
         self.appointment_time_entry.grid(row=5, column=4, padx=20, pady=10, sticky="w")
-        self.appointment_time_entry.bind("<<ComboboxSelected>>", self.check_time_selection)
+        self.appointment_time_entry.bind("<<DateEntrySelected>>", self.check_time_selection)
 
         # Create save button
         save_button = tk.Button(self, text="submit", command=self.save_appointment, width=20, bg="#0275DD", fg="#ffffff")
@@ -505,7 +521,6 @@ class PatientPage(tk.Frame):
         selected_clinic = self.clinic_var.get()
         selected_clinic_state = self.clinic_state_var.get()
         selected_specialty = self.doctor_specialty_var.get()
-        selected_doctor = self.doctor_name_var.get()
         if selected_specialty == "Choose Specialty":
             messagebox.showerror("Error", "Please select a doctor specialty")
             self.doctor_name_dropdown['values'] = ["Choose Doctor"]
@@ -542,16 +557,94 @@ class PatientPage(tk.Frame):
         self.doctor_name_dropdown['values'] = doctor_names if doctor_names else ["No doctors available"]
         self.doctor_name_dropdown.current(0)
 
+    def check_date_selection(self, event):
+        doctor_name = self.doctor_name_var.get()
+        specialty = self.doctor_specialty_var.get()
+        appointment_date = datetime.strptime(self.appointment_date_entry.get_date(), '%m/%d/%y').date()
+        current_date = datetime.now(pytz.timezone('Asia/Kuala_Lumpur')).date()
+        current_datetime = datetime.now(pytz.timezone('Asia/Kuala_Lumpur'))
+        
+        # Check if the selected date and time is in the past
+        if appointment_date < current_date:
+            messagebox.showerror("Error", "Past dates are not allowed. Please select a future date.")
+            self.appointment_date_entry.selection_set(datetime.now())
+            return
+        elif appointment_date > current_date + relativedelta(months=6):
+            messagebox.showerror("Error", "Appointments can only be booked within 6 months from the current date.")
+            self.appointment_date_entry.selection_set(datetime.now())
+            return
+
+        if appointment_date == current_datetime.date() and current_datetime.time().hour >= 17:
+            available_times = ["No Time Slot available"]
+        
+        elif appointment_date == current_datetime.date() and current_datetime.time().hour < 17:
+            available_times = ["Choose Time Slot"]
+            for i in range(9, 18):
+                if current_datetime.time().hour < i:
+                    if i < 10:
+                        available_times.append(f"0{i}:00")
+                    else:
+                        available_times.append(f"{i}:00")
+        else:
+            available_times = ["Choose Time Slot"]
+            for i in range(9, 18):
+                if i < 10:
+                    available_times.append(f"0{i}:00")
+                else:
+                    available_times.append(f"{i}:00")
+        try:
+            # Get the selected date
+            appointment_date = datetime.strptime(self.appointment_date_entry.get_date(), '%m/%d/%y').date()
+
+            # Query the database for appointments on the selected date with status "approved"
+            appointments_ref = db.reference('appointment')
+            appointments = appointments_ref.get()
+
+            if appointments is not None:
+                booked_times = []
+                for appointment in appointments.values():
+                    if appointment['appointment_date'] == appointment_date.strftime('%m/%d/%y') and appointment['status'] == 'Pending' and appointment['doctor_name'] == doctor_name and appointment['specialty'] == specialty:
+                        booked_times.append(appointment['appointment_time'])
+
+                # Remove the booked times from the list of available times
+                for booked_time in booked_times:
+                    if booked_time in available_times:
+                        available_times.remove(booked_time)
+
+            else:
+                print("No appointments found for the selected date")
+
+            # Update the values of self.appointment_time_entry with the updated list of available times
+            self.appointment_time_entry['values'] = available_times
+            self.appointment_time_entry.current(0)
+        
+        except Exception as e:
+            print(f"An error occurred check date Selection: {e}")
+            messagebox.showerror("Error", "An error occurred while checking the time selection")
+
     def check_time_selection(self, event):
         selected_time_slot = self.appointment_time_entry.get()
 
+        current_time = datetime.now(pytz.timezone('Asia/Kuala_Lumpur')).time()
+        if current_time.hour >= 17:
+            available_times = ["No Time Slot Available"]
+        else:
+            available_times = ["Choose Time Slot"]
+            for i in range(9, 18):
+                if current_time.hour < i:
+                    if i < 10:
+                        available_times.append(f"0{i}:00")
+                    else:
+                        available_times.append(f"{i}:00")
+
         if selected_time_slot == "Choose Time Slot":
             messagebox.showerror("Error", "Please select an appointment time slot")
-
+        
     def save_appointment(self):
         try:
-            timestamp = datetime.now(pytz.timezone('Asia/Kuala_Lumpur'))
-            formatted_timestamp = timestamp.strftime('%d/%m/%Y %H:%M')
+            tz = pytz.timezone('Asia/Kuala_Lumpur')
+            current_date = datetime.now(tz)
+            formatted_current_date = current_date.strftime('%m/%d/%Y %H:%M')
             username = self.username_entry.get()
             email = self.email_entry.get()
             phone = self.phone_entry.get()
@@ -560,10 +653,32 @@ class PatientPage(tk.Frame):
             doctor_name = self.doctor_name_var.get()
             specialty = self.doctor_specialty_var.get()
             # convert the appointment date to a string dmy format
-            appointment_date = datetime.strptime(self.appointment_date_entry.get_date(), '%d/%m/%y').date()
-            appointment_date_str = appointment_date.strftime('%d/%m/%Y')
-            
+            appointment_date = datetime.strptime(self.appointment_date_entry.get_date(), '%m/%d/%y').date()
+            appointment_date_str = appointment_date.strftime('%m/%d/%y')
             appointment_time = self.appointment_time_entry.get()
+
+            # Check if the selected date and time is in the past
+            selected_datetime = datetime.combine(appointment_date, datetime.strptime(appointment_time, '%H:%M').time(), tzinfo=tz)            
+            if selected_datetime < current_date:
+                messagebox.showerror("Error", "Past dates are not allowed. Please select a future date.")
+                return
+            
+            if appointment_time == "Choose Time Slot":
+                messagebox.showerror("Error", "Please select an appointment time slot")
+                return
+            
+            # Check if the selected date and time is already booked
+            appointments_ref = db.reference('appointment')
+            appointments = appointments_ref.get()
+
+            if appointments is None:
+                print("No appointments found for the selected date")
+            else:
+                for appointment in appointments.values():
+                    if appointment['appointment_date'] == appointment_date.strftime('%m/%d/%y') and appointment['appointment_time'] == appointment_time and appointment['status'] == 'Pending' and appointment['doctor_name'] == doctor_name and appointment['specialty'] == specialty:
+                        messagebox.showerror("Error", "This appointment date and time is already booked")
+                        return
+            
             matching_doctor_found = False
 
             doctors_ref = db.reference('doctors')
@@ -588,8 +703,8 @@ class PatientPage(tk.Frame):
                         'specialty': specialty,
                         'appointment_date': appointment_date_str,
                         'appointment_time': appointment_time,
-                        'created_at': formatted_timestamp,
-                        'updated_at': formatted_timestamp,
+                        'created_at': formatted_current_date,
+                        'updated_at': formatted_current_date,
                         'status': 'Pending'
                     }) 
                     print("Appointment saved successfully")
@@ -609,8 +724,8 @@ class PatientPage(tk.Frame):
                 messagebox.showerror("Error", "The Selected Doctor is not belong to the selected specialty. Please select the correct doctor and the specialty.")
 
         except Exception as e:
-            print(f"An error occurred: {e}")
-            messagebox.showerror("Error", "An error occurred while saving the appointment")
+            print(f"An error occurred Save Appointment: {e}")
+            messagebox.showerror("Error", "An error occurred while applying the appointment")
 
     def viewPrescriptionHistory(self):
         pass
