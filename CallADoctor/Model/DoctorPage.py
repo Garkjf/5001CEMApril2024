@@ -6,6 +6,7 @@ import os
 from firebase_admin import credentials, initialize_app, db
 dir = os.path.dirname(__file__)
 
+# Create relative path to image files
 serviceAccountKeyFile = os.path.join(dir, '../calladoctor-serviceAccountKey.json')
 logoImageFile = os.path.join(dir, '../Images/CallADoctor-logo-small.png')
 backIconImage = os.path.join(dir, '../Images/back-icon.png')
@@ -14,6 +15,7 @@ class DoctorPage(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent, bg="#9AB892")
         self.pack(fill=tk.BOTH, expand=True)
+        # Connect to database
         cred = credentials.Certificate(serviceAccountKeyFile)
         initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
         
@@ -25,20 +27,21 @@ class DoctorPage(tk.Frame):
 
         self.listPatients(self.patients)
 
+    # Generate Main Page
     def listPatients(self, patients):
         self.clearPage()
 
         top_frame = tk.Frame(self, bg="#9AB892")
         top_frame.grid(column=0, row=0, sticky="w")
         label = tk.Label(top_frame, text="Search For Patient", font=self.bold14, background="#9AB892")
-        label.grid(row=0, column=0, padx=20, pady=10, sticky="w")
+        label.grid(row=0, column=0, sticky="w")
 
         self.patient_name_entry = tk.Entry(top_frame)
-        self.patient_name_entry.grid(row=1, column=0, padx=20, pady=10, sticky="W")
+        self.patient_name_entry.grid(row=1, column=0, pady=10, sticky="W")
 
         submit_button = tk.Button(top_frame, text="Search", bg="#0275DD", fg="#ffffff", 
                                   command=self.search_patient)
-        submit_button.grid(row=1, column=1, padx=20, pady=10, sticky="w")
+        submit_button.grid(row=1, column=1, pady=10, sticky="w")
 
         row = tk.Frame(self, bg="#9AB892")
         row.grid(row=1, column=0, columnspan=2)
@@ -51,17 +54,19 @@ class DoctorPage(tk.Frame):
             name_label = tk.Label(patient_frame, text=f"Patient Name: {patient.get('username')}")
             name_label.grid(row=0, column=0, padx=20, sticky="w")
 
-            view_button = tk.Button(patient_frame, text="View", bg="#0275DD", fg="#ffffff", command = 
+            view_button = tk.Button(patient_frame, text="View", bg="#0275DD", fg="#ffffff", command= 
                                     self.handleViewPatient(patient_id))
             view_button.grid(row=0, column=1, padx=10, pady=5, sticky="w")
 
             email_label = tk.Label(patient_frame, text=f"Email: {patient.get('email')}")
             email_label.grid(row=1, column=0, padx=20, sticky="w")
 
+    # Clear page
     def clearPage(self):
         # Clear the patient information
         [widget.destroy() for widget in self.winfo_children() if isinstance(widget, tk.Frame)]
 
+    # Filter patients by search term
     def search_patient(self):
         # Function to handle the search functionality
         search_key = self.patient_name_entry.get()
@@ -75,10 +80,11 @@ class DoctorPage(tk.Frame):
                                self.patients.items()))
         self.listPatients(patients)
 
+    # Redirect to patient prescription page
     def handleViewPatient(self, patient_id):
-        return lambda: self.showPatientPrescriptions(patient_id)
+        return lambda: self.showPatientInfo(patient_id)
 
-    def showPatientPrescriptions(self, patient_id):
+    def showPatientInfo(self, patient_id):
         self.clearPage()
 
         top_frame = tk.Frame(self, bg="#9AB892")
@@ -91,11 +97,12 @@ class DoctorPage(tk.Frame):
         back_button = tk.Button(top_frame, image=back_icon, 
                                 command=lambda: self.listPatients(self.patients))
         back_button.image = back_icon
-        back_button.grid(row=0, column=0, pady=10, padx=10, sticky="w")
+        back_button.grid(row=0, column=0, sticky="w")
 
         patient_info_frame = tk.Frame(top_frame, bg="#ffffff")
-        patient_info_frame.grid(row=1, column=0, padx=20)
+        patient_info_frame.grid(row=1, column=0, pady=20)
 
+        # Get patient from patient_id
         patient = self.patients.get(patient_id)
         
         title_label = tk.Label(patient_info_frame, text="Patient Information", padx=10, pady=10,
@@ -107,16 +114,23 @@ class DoctorPage(tk.Frame):
                         f"Phone Number: {patient.get('phone')}"]
         
         for row, patient_info in enumerate(patient_info, 1):
-            tk.Label(patient_info_frame, text=patient_info, padx=10, bg="#ffffff")\
-            .grid(row=row, column=0, sticky="w")
+            tk.Label(patient_info_frame, text=patient_info, bg="#ffffff")\
+            .grid(row=row, column=0, padx=10, sticky="w")
+        
+        tk.Label(patient_info_frame, text="Generate New Prescription", padx=50, font=self.bold14,
+                 bg="#ffffff").grid(row=0, column=1)
+        
+        tk.Button(patient_info_frame, text="Add New Prescription",
+                  bg="#5FCF37", fg="#ffffff").grid(row=1, column=1)
         
         prescriptions = dict(filter(lambda entry: str(entry[1].get('patientID')) == patient_id, 
                                     self.prescriptions.items()))
         if not prescriptions:
             return
-        # Create table for prescriptions
+        
+        # Create prescriptions table
         prescription_table = tk.Frame(self)
-        prescription_table.grid(row=2, column=0, padx=20, pady=20)
+        prescription_table.grid(row=2, column=0, pady=20, sticky="w")
 
         columnNames = ["Doctor Name", "Specialist", "Action"]
         for column, name in enumerate(columnNames):
@@ -132,9 +146,57 @@ class DoctorPage(tk.Frame):
             e = tk.Label(prescription_table, padx=20, text=doctor.get('specialist'))
             e.grid(row=row, column=1)
 
-            view_button = tk.Button(prescription_table, padx=20, pady=5,
-                                    text="View", bg="#0275DD", fg="#ffffff")
+            view_button = tk.Button(prescription_table, padx=20, pady=5, text="View", 
+                                    bg="#0275DD", fg="#ffffff",
+                                    command=self.handleViewPrescription(prescription_id))
             view_button.grid(row=row, column=2)
+    
+    def handleViewPrescription(self, prescription_id):
+        return lambda: self.showPrescriptionInfo(prescription_id)
+    
+    def showPrescriptionInfo(self, prescription_id):
+        self.clearPage()
+
+        prescription = self.prescriptions.get(prescription_id)
+        patient_id = str(prescription.get('patientID'))
+        patient = self.patients.get(patient_id)
+        doctor = self.doctors.get(prescription.get('doctorID'))
+
+        top_frame = tk.Frame(self, bg="#9AB892")
+        top_frame.grid(column=0, row=0, sticky="w")
+
+        # Load the back icon
+        back_icon = tk.PhotoImage(file=backIconImage)
+        back_icon = back_icon.subsample(20, 20)
+        back_button = tk.Button(top_frame, image=back_icon, command=self.handleViewPatient(patient_id))
+        back_button.image = back_icon
+        back_button.grid(row=0, column=0, sticky="w")
+
+        main_frame = tk.Frame(self, bg="#ffffff", padx=10, pady=10)
+        main_frame.grid(row=1, column=0)
+
+        tk.Label(main_frame, text="Patient Information", font=self.bold14, bg="#ffffff",
+                 padx=10, pady=10).grid(row=0, column=0)
+        
+        info_frame = tk.Frame(main_frame, bg="#ffffff", padx=10, pady=10)
+        info_frame.grid(row=0, column=0)
+
+        prescription_info = [
+            ("Patient Name", patient.get('username')),
+            ("Email", patient.get('email')),
+            ("Phone Number", patient.get('phone')),
+            ("Clinic Name", doctor.get('clinic_name')),
+            ("Doctor Name", doctor.get('username')),
+            ("Doctor Phone Number", doctor.get('phone')),
+            ("Doctor Phone Number", doctor.get('specialist')),
+        ]
+        
+        for i, (label, value) in enumerate(prescription_info):
+            column, row = divmod(i, 4)
+
+            label = tk.Label(main_frame, text=f"{label}: {value}", padx=10, pady=10, 
+                             bg="#ffffff")
+            label.grid(row=row+1, column=column, sticky="w")
 
 
 if __name__ == "__main__":
@@ -175,7 +237,7 @@ if __name__ == "__main__":
     my_canvas.configure(yscrollcommand=my_scrollbar_vertical.set)
 
     # Create another frame inside the canvas
-    second_frame = tk.Frame(my_canvas, bg="#9AB892", width=1200)
+    second_frame = tk.Frame(my_canvas, padx=20, pady=20, bg="#9AB892", width=1200)
 
     # Add that new frame to a window in the canvas
     my_canvas.create_window((0,0), window=second_frame, anchor="nw")
