@@ -345,6 +345,9 @@ class PatientPage(tk.Frame):
         for i, (label, value) in enumerate(labels):
             tk.Label(info_frame, text=label, font=("Helvetica", 12, "bold"), bg="#d9d9d9", padx=30, pady=10).grid(row=i, column=0, sticky="w")
             tk.Label(info_frame, text=value, font=("Helvetica", 10), bg="#d9d9d9", padx=30, pady=10).grid(row=i, column=1, sticky="w")
+        
+        make_appointment_btn = tk.Button(self, text="Reserve Your Appointment", bg="#0275DD", fg="#ffffff", command=app.makeAppointment)
+        make_appointment_btn.grid(columnspan=1, pady=10)    
 
     def makeAppointment(self):
         self.clearClinicInfo()  
