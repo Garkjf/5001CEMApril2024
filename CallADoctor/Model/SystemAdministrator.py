@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 
-class SystemAdminstrator:
+class SystemAdministrator:
     def __init__(self):
         self.systemAdmin_id = None
         self.name = None
