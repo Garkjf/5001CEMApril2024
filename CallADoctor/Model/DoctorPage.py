@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import messagebox
 import sys
 from tkinter.font import BOLD, Font
 import os
@@ -257,7 +258,7 @@ class DoctorPage(tk.Frame):
         info_frame = tk.Frame(main_frame, bg="#ffffff")
         info_frame.grid(row=1, column=0, columnspan=2, sticky="w")
 
-        doctor = self.doctors.get(str(doctor_id))
+        doctor = self.doctors.get(str(self.doctor_id))
 
         prescription_info = [
             ("Patient Name", patient.get('username')), 
@@ -293,12 +294,26 @@ class DoctorPage(tk.Frame):
 
         tk.Label(main_frame, text="Doctor's Remark", bg="#ffffff").grid(row=4, column=0, 
                                                                  padx=10, sticky="w")
-        self.treatment_entry = tk.Text(main_frame, height=5, width=50)
-        self.treatment_entry.grid(row=5, column=0, pady=10, columnspan=2, sticky="w")
+        self.remark_entry = tk.Text(main_frame, height=5, width=50)
+        self.remark_entry.grid(row=5, column=0, pady=10, columnspan=2, sticky="w")
 
         submit_button = tk.Button(main_frame, padx=20, pady=5, text="View", 
-                                    bg="#0275DD", fg="#ffffff")
+                                    bg="#0275DD", fg="#ffffff", 
+                                    command = lambda: self.addPrescription(patient_id))
         submit_button.grid(row=6, column=0, pady=10, sticky="w")
+
+    def addPrescription(self, patient_id):
+        newPrescription = {
+            "diagnosis": self.diagnosis_entry.get(),
+            "treatment": self.treatment_entry.get(),
+            "remark": self.remark_entry.get(),
+            "symptoms": self.diagnosis_entry.get(),
+            "patientID": patient_id,
+            "doctorID": doctor_id
+        }
+        db.reference('prescriptions').push(newPrescription)
+        messagebox.showinfo("Success", "Created new prescription!")
+        self.showAddPrescriptionPage(patient_id)
 
     # Logout
     def logout(self):
