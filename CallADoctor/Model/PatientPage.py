@@ -9,6 +9,7 @@ from dateutil.relativedelta import relativedelta
 import pytz
 import os
 import subprocess
+import sys
 import PatientPage
 from SharePath import start_login
 
@@ -23,7 +24,9 @@ def start_login():
     subprocess.Popen(["python", os.path.join(dir, 'Login.py')])
 
 class PatientPage(tk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, patient_id):
+        self.patient_id = patient_id
+
         super().__init__(parent, bg="#F6F6E9")
         self.pack(fill=tk.BOTH, expand=True)
         cred = credentials.Certificate(serviceAccountKeyFile)
@@ -739,6 +742,8 @@ class PatientPage(tk.Frame):
 
 # Main Execution
 if __name__ == "__main__":
+    patient_id = sys.argv[1]
+
     root = tk.Tk()  # Create a new Tk root window
     root.title("Call a Doctor - Patient Page")  # Set the title of the window
     root.geometry("1200x600")
@@ -784,7 +789,7 @@ if __name__ == "__main__":
     logo_label.pack(side="left", fill="x")   
  
     # Body
-    app = PatientPage(second_frame)  # Pass the second_frame window to your LoginPage class
+    app = PatientPage(second_frame, patient_id)  # Pass the second_frame window to your LoginPage class
 
     search_clinics_btn = tk.Button(nav_bar, text="Search Clinics", command=app.searchClinic)
     search_clinics_btn.pack(side="left", fill="x")

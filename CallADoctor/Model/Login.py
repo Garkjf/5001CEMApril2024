@@ -19,14 +19,14 @@ initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia
 def start_registration():
     subprocess.call(["python", os.path.join(dir, 'Registration.py')])    
 
-def start_patient():
-    subprocess.call(["python", os.path.join(dir, 'PatientPage.py')])
+def start_patient(patient_id):
+    subprocess.call(["python", os.path.join(dir, 'PatientPage.py')] + [patient_id])
 
-def start_doctor():
-    subprocess.call(["python", os.path.join(dir, 'DoctorPage.py')])
+def start_doctor(doctor_id):
+    subprocess.call(["python", os.path.join(dir, 'DoctorPage.py')] + [doctor_id])
 
-def start_admin():
-    subprocess.call(["python", os.path.join(dir, 'ClinicAdministatorPage.py')])
+def start_admin(admin_id):
+    subprocess.call(["python", os.path.join(dir, 'ClinicAdministatorPage.py')] + [admin_id])
 
 class LoginPage(tk.Frame):
     def __init__(self, parent):
@@ -165,24 +165,17 @@ class LoginPage(tk.Frame):
             for key, value in user_data.items():
                 if role == "Patient":
                     if value['ic_passport_id'] == ic_passport_id and value['password'] == password:
-                        with open('login_data.txt', 'w') as f:
-                            f.write(self.ic_passport_id_entry.get())
                         messagebox.showinfo("Success", "Login Successful")
-                        return self.patientScreen()
+                        return self.patientScreen(self.ic_passport_id_entry.get())
 
                 elif role == "Doctor":
                     if value['ic_passport_id'] == ic_passport_id and value['password'] == password and clinic == value['clinic_name'] and clinic_state == value['clinic_state']:
-                        with open('login_data.txt', 'w') as f:
-                            f.write(self.ic_passport_id_entry.get())
                         messagebox.showinfo("Success", "Login Successful")
-                        return self.doctorScreen()
+                        return self.doctorScreen(self.ic_passport_id_entry.get())
                     
                 elif role == "Clinic Admin":
                     if value['ic_passport_id'] == ic_passport_id and value['password'] == password and clinic == value['clinic_name'] and clinic_state == value['clinic_state']:
-                        with open('login_data.txt', 'w') as f:
-                            f.write(self.ic_passport_id_entry.get())
-                        messagebox.showinfo("Success", "Login Successful")
-                        return self.clinicAdminScreen()
+                        return self.clinicAdminScreen(self.ic_passport_id_entry.get())
                 else:
                     raise Exception("Invalid role")
                
@@ -197,17 +190,17 @@ class LoginPage(tk.Frame):
         self.master.destroy()
         start_registration()
 
-    def patientScreen(self):
+    def patientScreen(self, patient_id):
         self.master.destroy()
-        start_patient()  
+        start_patient(patient_id)  
 
-    def doctorScreen(self):
+    def doctorScreen(self, doctor_id):
         self.master.destroy()
-        start_doctor()
+        start_doctor(doctor_id)
     
-    def adminScreen(self):
+    def adminScreen(self, admin_id):
         self.master.destroy()
-        start_admin()
+        start_admin(admin_id)
 
 # Main Execution
 if __name__ == "__main__":

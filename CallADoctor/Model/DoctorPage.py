@@ -1,6 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox
+import sys
 from tkinter.font import BOLD, Font
 import os
 from firebase_admin import credentials, initialize_app, db
@@ -12,9 +11,11 @@ logoImageFile = os.path.join(dir, '../Images/CallADoctor-logo-small.png')
 backIconImage = os.path.join(dir, '../Images/back-icon.png')
 
 class DoctorPage(tk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, doctor_id):
         super().__init__(parent, bg="#9AB892")
         self.pack(fill=tk.BOTH, expand=True)
+
+        self.doctor_id = doctor_id
         # Connect to database
         cred = credentials.Certificate(serviceAccountKeyFile)
         initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
@@ -236,6 +237,8 @@ class DoctorPage(tk.Frame):
         self.placeBackButton(top_frame, lambda: self.showMainPage(self.patients))
 
 if __name__ == "__main__":
+    doctor_id = sys.argv[1]
+    
     root = tk.Tk()
     root.title("Call a Doctor - Doctor Page")
     root.geometry("1200x600")
@@ -282,7 +285,7 @@ if __name__ == "__main__":
     second_frame.bind('<Configure>', lambda e: my_canvas.configure(scrollregion=my_canvas.bbox("all")))
  
     # Body
-    app = DoctorPage(second_frame)
+    app = DoctorPage(second_frame, doctor_id)
 
     app.pack(fill="both", expand=True)
     root.mainloop()
