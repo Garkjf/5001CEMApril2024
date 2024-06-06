@@ -25,10 +25,10 @@ class DoctorPage(tk.Frame):
 
         self.bold14 = Font(self.master, size=14, weight=BOLD)
 
-        self.listPatients(self.patients)
+        self.showMainPage(self.patients)
 
     # Generate Main Page
-    def listPatients(self, patients):
+    def showMainPage(self, patients):        
         self.clearPage()
 
         top_frame = tk.Frame(self, bg="#9AB892")
@@ -43,12 +43,17 @@ class DoctorPage(tk.Frame):
                                   command=self.search_patient)
         submit_button.grid(row=1, column=1, pady=10, sticky="w")
 
-        row = tk.Frame(self, bg="#9AB892")
-        row.grid(row=1, column=0, columnspan=2)
+        patients_list = tk.Frame(self, bg="#9AB892")
+        patients_list.grid(row=1, column=0, columnspan=2)
 
+        self.listPatients(patients_list, patients)
+
+    # List Patients
+    def listPatients(self, frame, patients):
         for count, (patient_id, patient) in enumerate(patients.items()):
             # Frame for the patient
-            patient_frame = tk.Frame(row, borderwidth=2, relief="groove", width=200, height=100)
+            patient_frame = tk.Frame(frame, borderwidth=2, relief="groove", 
+                                     width=200, height=100)
             patient_frame.grid(row=count//4, column=count%4, padx=10, pady=30, sticky="w")
 
             name_label = tk.Label(patient_frame, text=f"Patient Name: {patient.get('username')}")
@@ -78,26 +83,31 @@ class DoctorPage(tk.Frame):
         self.patients = patients_ref.get()
         patients = dict(filter(lambda patient: search_key in patient[1].get('username'), 
                                self.patients.items()))
-        self.listPatients(patients)
+        
+        self.showMainPage(patients)
 
     # Redirect to patient prescription page
     def handleViewPatient(self, patient_id):
-        return lambda: self.showPatientInfo(patient_id)
+        return lambda: self.showPatientInfoPage(patient_id)
 
-    def showPatientInfo(self, patient_id):
-        self.clearPage()
-
-        top_frame = tk.Frame(self, bg="#9AB892")
-        top_frame.grid(column=0, row=0, sticky="w")
-
+    def placeBackButton(self, frame, command):
         # Load the back icon
         back_icon = tk.PhotoImage(file=backIconImage)
         back_icon = back_icon.subsample(20, 20)
 
-        back_button = tk.Button(top_frame, image=back_icon, 
-                                command=lambda: self.listPatients(self.patients))
+        back_button = tk.Button(frame, image=back_icon, command=command)
         back_button.image = back_icon
         back_button.grid(row=0, column=0, sticky="w")
+
+        patient_info_frame = tk.Frame(frame, bg="#ffffff")
+        patient_info_frame.grid(row=1, column=0, pady=10)
+
+    def showPatientInfoPage(self, patient_id):
+        self.clearPage()
+
+        top_frame = tk.Frame(self, bg="#9AB892")
+        top_frame.grid(column=0, row=0, sticky="w")
+        self.placeBackButton(top_frame, lambda: self.showMainPage(self.patients))
 
         patient_info_frame = tk.Frame(top_frame, bg="#ffffff")
         patient_info_frame.grid(row=1, column=0, pady=20)
@@ -121,14 +131,15 @@ class DoctorPage(tk.Frame):
                  bg="#ffffff").grid(row=0, column=1)
         
         tk.Button(patient_info_frame, text="Add New Prescription",
-                  bg="#5FCF37", fg="#ffffff").grid(row=1, column=1)
+                  bg="#5FCF37", fg="#ffffff",
+                  command= self.showAddPrescriptionPage).grid(row=1, column=1)
         
         prescriptions = dict(filter(lambda entry: str(entry[1].get('patientID')) == patient_id, 
                                     self.prescriptions.items()))
-        if not prescriptions:
-            return
-        
-        # Create prescriptions table
+        self.generatePrescriptionTable(prescriptions)
+    
+    # Create prescriptions table
+    def generatePrescriptionTable(self, prescriptions):
         prescription_table = tk.Frame(self)
         prescription_table.grid(row=2, column=0, pady=20, sticky="w")
 
@@ -152,9 +163,9 @@ class DoctorPage(tk.Frame):
             view_button.grid(row=row, column=2)
     
     def handleViewPrescription(self, prescription_id):
-        return lambda: self.showPrescriptionInfo(prescription_id)
+        return lambda: self.showPrescriptionInfoPage(prescription_id)
     
-    def showPrescriptionInfo(self, prescription_id):
+    def showPrescriptionInfoPage(self, prescription_id):
         self.clearPage()
 
         prescription = self.prescriptions.get(prescription_id)
@@ -165,30 +176,25 @@ class DoctorPage(tk.Frame):
         top_frame = tk.Frame(self, bg="#9AB892")
         top_frame.grid(column=0, row=0, sticky="w")
 
-        # Load the back icon
-        back_icon = tk.PhotoImage(file=backIconImage)
-        back_icon = back_icon.subsample(20, 20)
-        back_button = tk.Button(top_frame, image=back_icon, command=self.handleViewPatient(patient_id))
-        back_button.image = back_icon
-        back_button.grid(row=0, column=0, sticky="w")
+        self.placeBackButton(top_frame, self.handleViewPatient(patient_id))
 
         main_frame = tk.Frame(self, bg="#ffffff", padx=10, pady=10)
         main_frame.grid(row=1, column=0, pady=10)
 
         tk.Label(main_frame, text="Patient Information", font=self.bold14, bg="#ffffff",
                  pady=10).grid(row=0, column=0, sticky="w")
-        
-        info_frame = tk.Frame(main_frame, bg="#ffffff", pady=10)
+
+        self.fillPrescriptionInfo(main_frame, patient, doctor, prescription)
+
+    def fillPrescriptionInfo(self, main_frame, patient, doctor, prescription):
+        info_frame = tk.Frame(main_frame, bg="#ffffff")
         info_frame.grid(row=1, column=0, sticky="w")
 
         prescription_info = [
-            ("Patient Name", patient.get('username')),
-            ("Email", patient.get('email')),
-            ("Phone Number", patient.get('phone')),
-            ("Clinic Name", doctor.get('clinic_name')),
-            ("Doctor Name", doctor.get('username')),
-            ("Doctor Phone Number", doctor.get('phone')),
-            ("Specialist", doctor.get('specialist')),
+            ("Patient Name", patient.get('username')), ("Email", patient.get('email')),
+            ("Phone Number", patient.get('phone')), ("Clinic Name", doctor.get('clinic_name')),
+            ("Doctor Name", doctor.get('username')), ("Doctor Phone Number", doctor.get('phone')),
+            ("Specialist", doctor.get('specialist'))
         ]
         
         for i, (label, value) in enumerate(prescription_info):
@@ -205,12 +211,11 @@ class DoctorPage(tk.Frame):
         prescription_info = [
             ("Symptoms", prescription.get('symptoms')),
             ("Diagnosis", prescription.get('diagnosis')),
-            ("Treatment", prescription.get('treatment')),
+            ("Treatment", prescription.get('treatment'))
         ]
 
         for i, (label, value) in enumerate(prescription_info):
-            label = tk.Label(middle_frame, text=f"{label}: {value}", padx=5, pady=5, 
-                             bg="#D9D9D9")
+            label = tk.Label(middle_frame, text=f"{label}: {value}", padx=5, pady=5, bg="#D9D9D9")
             label.grid(row=i, column=0, sticky="w")
         
         tk.Label(main_frame, text="Doctor's Remark", font=self.bold14, bg="#ffffff")\
@@ -220,7 +225,15 @@ class DoctorPage(tk.Frame):
         remark_frame.grid(row=6, column=0, sticky="w")
 
         tk.Label(remark_frame, text=prescription.get("remark"), bg="#D9D9D9")\
-        .grid(row=0, column=0, sticky="w")
+            .grid(row=0, column=0, sticky="w")
+    
+    def showAddPrescriptionPage(self):
+        self.clearPage()
+
+        top_frame = tk.Frame(self, bg="#9AB892")
+        top_frame.grid(column=0, row=0, sticky="w")
+
+        self.placeBackButton(top_frame, lambda: self.showMainPage(self.patients))
 
 if __name__ == "__main__":
     root = tk.Tk()
