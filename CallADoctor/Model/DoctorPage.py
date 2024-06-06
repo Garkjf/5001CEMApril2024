@@ -3,12 +3,17 @@ import sys
 from tkinter.font import BOLD, Font
 import os
 from firebase_admin import credentials, initialize_app, db
+import subprocess
+
 dir = os.path.dirname(__file__)
 
 # Create relative path to image files
 serviceAccountKeyFile = os.path.join(dir, '../calladoctor-serviceAccountKey.json')
 logoImageFile = os.path.join(dir, '../Images/CallADoctor-logo-small.png')
 backIconImage = os.path.join(dir, '../Images/back-icon.png')
+
+def start_login():
+    subprocess.Popen(["python", os.path.join(dir, 'Login.py')])
 
 class DoctorPage(tk.Frame):
     def __init__(self, parent, doctor_id):
@@ -87,10 +92,6 @@ class DoctorPage(tk.Frame):
         
         self.showMainPage(patients)
 
-    # Redirect to patient prescription page
-    def handleViewPatient(self, patient_id):
-        return lambda: self.showPatientInfoPage(patient_id)
-
     def placeBackButton(self, frame, command):
         # Load the back icon
         back_icon = tk.PhotoImage(file=backIconImage)
@@ -102,6 +103,10 @@ class DoctorPage(tk.Frame):
 
         patient_info_frame = tk.Frame(frame, bg="#ffffff")
         patient_info_frame.grid(row=1, column=0, pady=10)
+
+    # Redirect to patient prescription page
+    def handleViewPatient(self, patient_id):
+        return lambda: self.showPatientInfoPage(patient_id)
 
     def showPatientInfoPage(self, patient_id):
         self.clearPage()
@@ -133,7 +138,7 @@ class DoctorPage(tk.Frame):
         
         tk.Button(patient_info_frame, text="Add New Prescription",
                   bg="#5FCF37", fg="#ffffff",
-                  command= self.showAddPrescriptionPage).grid(row=1, column=1)
+                  command= self.handleAddPrescription(patient_id)).grid(row=1, column=1)
         
         prescriptions = dict(filter(lambda entry: str(entry[1].get('patientID')) == patient_id, 
                                     self.prescriptions.items()))
@@ -163,6 +168,7 @@ class DoctorPage(tk.Frame):
                                     command=self.handleViewPrescription(prescription_id))
             view_button.grid(row=row, column=2)
     
+    # Prescription info page
     def handleViewPrescription(self, prescription_id):
         return lambda: self.showPrescriptionInfoPage(prescription_id)
     
@@ -228,13 +234,76 @@ class DoctorPage(tk.Frame):
         tk.Label(remark_frame, text=prescription.get("remark"), bg="#D9D9D9")\
             .grid(row=0, column=0, sticky="w")
     
-    def showAddPrescriptionPage(self):
+    # Add New Prescription page
+    def handleAddPrescription(self, patient_id):
+        return lambda: self.showAddPrescriptionPage(patient_id)
+
+    def showAddPrescriptionPage(self, patient_id):
         self.clearPage()
 
         top_frame = tk.Frame(self, bg="#9AB892")
         top_frame.grid(column=0, row=0, sticky="w")
 
-        self.placeBackButton(top_frame, lambda: self.showMainPage(self.patients))
+        self.placeBackButton(top_frame, self.handleViewPatient(patient_id))
+        
+        patient = self.patients.get(patient_id)
+
+        main_frame = tk.Frame(self, bg="#ffffff", padx=10, pady=10)
+        main_frame.grid(row=1, column=0, pady=10)
+
+        tk.Label(main_frame, text="Patient Information", font=self.bold14, bg="#ffffff",
+                 pady=10).grid(row=0, column=0, sticky="w")
+        
+        info_frame = tk.Frame(main_frame, bg="#ffffff")
+        info_frame.grid(row=1, column=0, columnspan=2, sticky="w")
+
+        doctor = self.doctors.get(str(doctor_id))
+
+        prescription_info = [
+            ("Patient Name", patient.get('username')), 
+            ("Email", patient.get('email')),
+            ("Phone Number", patient.get('phone')), 
+            ("Clinic Name", doctor.get('clinic_name')),
+            ("Doctor Name", doctor.get('username')), 
+            ("Doctor Phone Number", doctor.get('phone')),
+            ("Specialist", doctor.get('specialist'))
+        ]
+        
+        for i, (label, value) in enumerate(prescription_info):
+            column, row = divmod(i, 4)
+
+            label = tk.Label(info_frame, text=f"{label}: {value}", padx=5, pady=5, 
+                             bg="#ffffff")
+            label.grid(row=row+1, column=column, sticky="w")
+
+        tk.Label(main_frame, text="Symptoms", bg="#ffffff").grid(row=2, column=0, 
+                                                                 padx=10, sticky="w")
+        self.symptoms_entry = tk.Entry(main_frame)
+        self.symptoms_entry.grid(row=2, column=1, pady=10, sticky="w")
+
+        tk.Label(main_frame, text="Diagnosis", bg="#ffffff").grid(row=3, column=0, 
+                                                                 padx=10, sticky="w")
+        self.diagnosis_entry = tk.Entry(main_frame)
+        self.diagnosis_entry.grid(row=3, column=1, pady=10, sticky="w")
+
+        tk.Label(main_frame, text="Treatment", bg="#ffffff").grid(row=3, column=0, 
+                                                                 padx=10, sticky="w")
+        self.treatment_entry = tk.Entry(main_frame)
+        self.treatment_entry.grid(row=3, column=1, pady=10, sticky="w")
+
+        tk.Label(main_frame, text="Doctor's Remark", bg="#ffffff").grid(row=4, column=0, 
+                                                                 padx=10, sticky="w")
+        self.treatment_entry = tk.Text(main_frame, height=5, width=50)
+        self.treatment_entry.grid(row=5, column=0, pady=10, columnspan=2, sticky="w")
+
+        submit_button = tk.Button(main_frame, padx=20, pady=5, text="View", 
+                                    bg="#0275DD", fg="#ffffff")
+        submit_button.grid(row=6, column=0, pady=10, sticky="w")
+
+    # Logout
+    def logout(self):
+        start_login()
+        self.master.quit()
 
 if __name__ == "__main__":
     doctor_id = sys.argv[1]
@@ -253,12 +322,6 @@ if __name__ == "__main__":
 
     logo_label = tk.Label(nav_bar, image=logo, padx=20)
     logo_label.pack(side="left")
-
-    search_clinics_btn = tk.Button(nav_bar, text="Search Patients")
-    search_clinics_btn.pack(side="left", fill="x")
-
-    make_appointment_btn = tk.Button(nav_bar, text="Assigned Request")
-    make_appointment_btn.pack(side="left", fill="x")
 
     # Create a main frame
     main_frame = tk.Frame(root)
@@ -286,6 +349,15 @@ if __name__ == "__main__":
  
     # Body
     app = DoctorPage(second_frame, doctor_id)
+
+    search_clinics_btn = tk.Button(nav_bar, text="Search Patients", command=app.showMainPage(app.patients))
+    search_clinics_btn.pack(side="left", fill="x")
+
+    make_appointment_btn = tk.Button(nav_bar, text="Assigned Request")
+    make_appointment_btn.pack(side="left", fill="x")
+
+    logout_btn = tk.Button(nav_bar, text="Logout", command=app.logout)
+    logout_btn.pack(side="left", fill="x")
 
     app.pack(fill="both", expand=True)
     root.mainloop()
