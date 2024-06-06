@@ -7,6 +7,7 @@ import os
 import subprocess
 import re
 from SharePath import start_login
+import uuid
 
 # Create relative file paths
 dir = os.path.dirname(__file__)
@@ -145,7 +146,7 @@ class RegistrationPage(tk.Frame):
         phone = self.phone_no_entry.get()
         password = self.password_entry.get()
         confirm_password = self.confirm_password_entry.get()
-
+        patient_id = str(uuid.uuid4())
         # Capitalize the first letter of each word in the username
         username = username.title()
 
@@ -208,7 +209,7 @@ class RegistrationPage(tk.Frame):
                 return 
             
             if role == 'Patient':
-                self.save_patient(role, ic_passport_id, username, email, phone, password)
+                self.save_patient(patient_id, role, ic_passport_id, username, email, phone, password)
                 messagebox.showinfo("Success", "Patient registration successful")
                 self.login()
             else:
@@ -217,9 +218,10 @@ class RegistrationPage(tk.Frame):
             print(e)
             messagebox.showerror("Error", e)
 
-    def save_patient(self, role, ic_passport_id, username, email, phone, password):
+    def save_patient(self,patient_id, role, ic_passport_id, username, email, phone, password):
         ref = db.reference('patients')
         ref.child(ic_passport_id).set({
+            'patientID': patient_id,
             'role': role,
             'ic_passport_id': ic_passport_id,
             'username': username,

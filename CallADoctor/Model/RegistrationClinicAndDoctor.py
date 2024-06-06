@@ -7,6 +7,7 @@ import os
 import subprocess
 import re
 from SharePath import start_login
+import uuid
 
 # Create relative file paths
 dir = os.path.dirname(__file__)
@@ -268,6 +269,8 @@ class RegistrationPage(tk.Frame):
         confirm_password = self.confirm_password_entry.get()
         specialist = self.specialist_var.get()
         clinic_info = {}
+        doctor_id = str(uuid.uuid4())
+        clinic_id = str(uuid.uuid4())
 
         # Capitalize the first letter of each word in the username
         username = username.title()
@@ -353,10 +356,10 @@ class RegistrationPage(tk.Frame):
                 return 
 
             if role == 'Doctor':
-                self.save_doctor(role, clinic, clinic_state, ic_passport_id, username, email, phone, password, specialist)
+                self.save_doctor(doctor_id, role, clinic, clinic_state, ic_passport_id, username, email, phone, password, specialist)
                 messagebox.showinfo("Success", "Your Doctor registration information is sending for approval")
             elif role == 'Clinic Admin':
-                self.save_clinic_admin(role, clinic, clinic_state, ic_passport_id, username, email, phone, password)
+                self.save_clinic_admin(clinic_id, role, clinic, clinic_state, ic_passport_id, username, email, phone, password)
                 messagebox.showinfo("Success", "Your Clinic Admin registration information is sending for approval")
             else:
                 messagebox.showerror("Error", "Invalid role selected")
@@ -364,13 +367,14 @@ class RegistrationPage(tk.Frame):
             print(e)
             messagebox.showerror("Error", e)
 
-    def save_clinic_admin(self, role, clinic_name, clinic_state, ic_passport_id, username, email, phone, password):
+    def save_clinic_admin(self, clinic_id, role, clinic_name, clinic_state, ic_passport_id, username, email, phone, password):
         if clinic_name == "" or clinic_name == "Choose Clinic":
             clinic_name = self.clinic_name_entry.get()
             # Capitalize the first letter of each word in the username
             clinic_name = clinic_name.title()
         ref = db.reference('clinicAdmins')
         ref.child(ic_passport_id).set({
+            'clinicID': clinic_id,
             'role': role,
             'clinic_name': clinic_name,
             'clinic_state': clinic_state,
@@ -381,12 +385,13 @@ class RegistrationPage(tk.Frame):
             'password': password
         })
 
-    def save_doctor(self, role, clinic_name, clinic_state, ic_passport_id, username, email, phone, password, specialist):
+    def save_doctor(self, doctor_id, role, clinic_name, clinic_state, ic_passport_id, username, email, phone, password, specialist):
         if clinic_name == "":
             clinic_name = self.clinic_name_entry.get()
 
         ref = db.reference('doctors')
         ref.child(ic_passport_id).set({
+            'doctorID': doctor_id,
             'role': role,
             'clinic_name': clinic_name,
             'clinic_state': clinic_state,
