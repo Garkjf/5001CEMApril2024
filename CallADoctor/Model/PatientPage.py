@@ -362,11 +362,9 @@ class PatientPage(tk.Frame):
         bold10 = Font(self.master, size=10, weight=BOLD)
         label = tk.Label(self, text="Reserve Your Time Slot", bg="#F6F6E9", font=bold14)
         label.grid(row=0, column=0, padx=20, pady=10, sticky="w")
-        with open('login_data.txt', 'r') as f:
-            ic_passport_id = f.read().strip()
 
         # get patient information
-        patient_ref = db.reference('patients/' + ic_passport_id)
+        patient_ref = db.reference('patients/' + self.patient_id)
         patient_data = patient_ref.get()
 
         label = tk.Label(self, text="Patient Information", bg="#F6F6E9", font=bold12)
