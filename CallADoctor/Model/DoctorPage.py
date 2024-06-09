@@ -26,13 +26,29 @@ class DoctorPage(tk.Frame):
         cred = credentials.Certificate(serviceAccountKeyFile)
         initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
         
-        self.patients = db.reference('patients').get()
-        self.prescriptions = db.reference('prescriptions').get()
         self.doctors = db.reference('doctors').get()
+        self.patients = self.getDefaultPatients()
+        self.prescriptions = db.reference('prescriptions').get()
 
         self.bold14 = Font(self.master, size=14, weight=BOLD)
 
         self.showMainPage(self.patients)
+
+    # Get patients that have appointments in the same clinic as the doctor
+    def getDefaultPatients(self):
+        clinic = self.doctors.get(self.doctor_id).get("clinic_name")
+
+        appointments = db.reference('appointment').get()
+        patient_names = set()
+
+        for appointment in appointments.values():
+            if appointment.get('clinic_name') == clinic:
+                patient_names.add(appointment.get('username'))
+        
+        db_patients = db.reference('patients').get()
+        res_patients = dict(filter(lambda patient: patient[1].get('username') in patient_names, 
+                                  db_patients.items()))
+        return res_patients
 
     # Generate Main Page
     def showMainPage(self, patients):        
