@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox
 import sys
 from tkinter.font import BOLD, Font
@@ -331,6 +332,46 @@ class DoctorPage(tk.Frame):
         messagebox.showinfo("Success", "Created new prescription!")
         self.showAddPrescriptionPage(patient_id)
 
+    def showAssignedRequestPage(self):
+        self.clearPage()
+
+        top_frame = tk.Frame(self, bg="#9AB892")
+        top_frame.grid(column=0, row=0, sticky="w")
+        tk.Label(top_frame, text="Assigned Request", bg="#9AB892", font=self.bold14)\
+            .grid(row=0, column=0, padx=10, sticky='w')
+        
+        filter_frame = tk.Frame(top_frame, bg="#9AB892")
+        filter_frame.grid(row=1, column=0, sticky='w', pady=10)
+
+        tk.Label(filter_frame, text="Filter By Doctor Name", bg="#9AB892")\
+            .grid(row=0, column=0, sticky='w', padx=10)
+
+        doctor_name_options = ["All"]
+        self.doctor_name_var = tk.StringVar()
+        self.doctor_name_dropdown = ttk.Combobox(filter_frame, 
+                                                  textvariable=self.doctor_name_var, 
+                                                  values=doctor_name_options, 
+                                                  state="readonly")
+        self.doctor_name_dropdown.current(0)
+        self.doctor_name_dropdown.grid(row=1, column=0, padx=10, pady=10, sticky="w")
+
+        tk.Label(filter_frame, text="Filter By Speciality", bg="#9AB892")\
+            .grid(row=0, column=1, sticky='w', padx=10)
+
+        doctor_specialty_options = ["All Specialty"]
+        self.doctor_specialty_var = tk.StringVar()
+        self.doctor_specialty_dropdown = ttk.Combobox(filter_frame,
+                                                  textvariable=self.doctor_specialty_var, 
+                                                  values=doctor_specialty_options, 
+                                                  state="readonly")
+        self.doctor_specialty_dropdown.current(0)
+        self.doctor_specialty_dropdown.grid(row=1, column=1, padx=10, pady=10, sticky="w")
+
+        submit_button = tk.Button(filter_frame, padx=20, pady=5, text="Search", 
+                                    bg="#0275DD", fg="#ffffff")
+        submit_button.grid(row=1, column=2, padx=10, sticky="w")
+
+
     # Logout
     def logout(self):
         start_login()
@@ -381,13 +422,15 @@ if __name__ == "__main__":
     # Body
     app = DoctorPage(second_frame, doctor_id)
 
-    search_clinics_btn = tk.Button(nav_bar, text="Search Patients", command=app.showMainPage(app.patients))
+    search_clinics_btn = tk.Button(nav_bar, text="Search Patients", 
+                                   command=lambda: app.showMainPage(app.patients))
     search_clinics_btn.pack(side="left", fill="x")
 
-    make_appointment_btn = tk.Button(nav_bar, text="Assigned Request")
+    make_appointment_btn = tk.Button(nav_bar, text="Assigned Request", 
+                                      command=app.showAssignedRequestPage)
     make_appointment_btn.pack(side="left", fill="x")
 
-    logout_btn = tk.Button(nav_bar, text="Logout", command=app.logout)
+    logout_btn = tk.Button(nav_bar, text="Logout", command=app.logout,)
     logout_btn.pack(side="left", fill="x")
 
     app.pack(fill="both", expand=True)
