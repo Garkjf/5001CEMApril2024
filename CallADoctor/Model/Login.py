@@ -91,7 +91,7 @@ class LoginPage(tk.Frame):
         self.clinic_state_var = tk.StringVar()
         self.label = tk.Label(self, text="Select Clinic State", bg="#9AB892")
         self.label.grid(row=5, column=4, padx=20, sticky="w")  # Changed column to 1
-        clinic_state_options = ["Choose Clinic State", "Johor", "Kedah", "Kelantan", "Melaka", "Negeri Sembilan", "Pahang", "Perak", "Perlis", "Pulau Pinang", "Sabah", "Sarawak", "Selangor", "Terengganu", "Kuala Lumpur", "Labuan", "Putrajaya"]
+        clinic_state_options = ["Choose Clinic State", "Johor", "Kedah", "Kelantan", "Melaka", "Negeri Sembilan", "Pahang", "Perak", "Perlis", "Penang", "Sabah", "Sarawak", "Selangor", "Terengganu", "Kuala Lumpur", "Labuan", "Putrajaya"]
         self.clinic_state_dropdown = ttk.Combobox(self, textvariable=self.clinic_state_var, values=clinic_state_options, state="readonly")
         self.clinic_state_dropdown.current(0)  # Set the default value to "Choose Clinic State"
         self.clinic_state_dropdown.grid(row=6, column=4, padx=20, pady=10, sticky="w") 
@@ -169,13 +169,20 @@ class LoginPage(tk.Frame):
                         return self.patientScreen(self.ic_passport_id_entry.get())
 
                 elif role == "Doctor":
-                    if value['ic_passport_id'] == ic_passport_id and value['password'] == password and clinic == value['clinic_name'] and clinic_state == value['clinic_state'] and value['status'] == "Approved":
-                        messagebox.showinfo("Success", "Login Successful")
-                        return self.doctorScreen(self.ic_passport_id_entry.get())
+                    if value['ic_passport_id'] == ic_passport_id and value['password'] == password and clinic == value['clinic_name'] and clinic_state == value['clinic_state']:
+                        if value['status'] == "Pending":
+                            raise Exception("Your account is still pending approval")
+                        elif value['status'] == "Approved":
+                            messagebox.showinfo("Success", "Login Successful")
+                            return self.doctorScreen(self.ic_passport_id_entry.get())
                     
                 elif role == "Clinic Admin":
-                    if value['ic_passport_id'] == ic_passport_id and value['password'] == password and clinic == value['clinic_name'] and clinic_state == value['clinic_state'] and value['status'] == "Approved":
-                        return self.clinicAdminScreen(self.ic_passport_id_entry.get())
+                    if value['ic_passport_id'] == ic_passport_id and value['password'] == password and clinic == value['clinic_name'] and clinic_state == value['clinic_state']:
+                        if value['status'] == "Pending":
+                            raise Exception("Your account is still pending approval")
+                        elif value['status'] == "Approved":
+                            messagebox.showinfo("Success", "Login Successful")
+                            return self.clinicAdminScreen(self.ic_passport_id_entry.get())
                 else:
                     raise Exception("Invalid role")
                
@@ -183,7 +190,7 @@ class LoginPage(tk.Frame):
             raise Exception("Invalid username or password")
         except Exception as e:
             print(e)
-            messagebox.showerror("Error", "Invalid username or password")
+            messagebox.showerror("Error", e)
 
     def register(self):
         # close the current window
