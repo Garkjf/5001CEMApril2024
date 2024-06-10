@@ -123,8 +123,10 @@ class PatientPage(tk.Frame):
         row.grid()
 
         for clinic_id, clinic_data in clinics.items():
-            clinic_name = clinic_data.get('clinic_name')
-            clinic_state = clinic_data.get('clinic_state')
+            status = clinic_data.get('status')
+            if status == "Approved":
+                clinic_name = clinic_data.get('clinic_name')
+                clinic_state = clinic_data.get('clinic_state')
 
             # Check if the clinic name and state combination is unique
             if (clinic_name, clinic_state) not in unique_clinics:
@@ -212,10 +214,12 @@ class PatientPage(tk.Frame):
 
         for doctor_id, doctor_data in doctors.items():
             specialist = doctor_data.get('specialist')
-            if doctor_data.get('clinic_state')  == selected_state and doctor_data.get('clinic_name') == selected_clinic:
-                if specialist not in doctor_specialties:
-                    doctor_specialty_options.append(specialist)
-                    doctor_specialties.add(specialist)
+            status = doctor_data.get('status')
+            if status == "Approved":
+                if doctor_data.get('clinic_state')  == selected_state and doctor_data.get('clinic_name') == selected_clinic:
+                    if specialist not in doctor_specialties:
+                        doctor_specialty_options.append(specialist)
+                        doctor_specialties.add(specialist)
 
         # Doctor Specialty Selection
         self.doctor_specialty_var = tk.StringVar()
@@ -258,8 +262,9 @@ class PatientPage(tk.Frame):
         
         # Display the related doctors
         for doctor_id, doctor_data in doctors.items():
-            if doctor_data.get('clinic_state')  == selected_state and doctor_data.get('clinic_name') == selected_clinic and (doctor_data.get('specialist') == selected_specialty or selected_specialty == "All Specialty"):
-                print(f"Match found for doctor {doctor_id}")  # Debugging print statement
+            if doctor_data.get('status') == "Approved":
+                if doctor_data.get('clinic_state')  == selected_state and doctor_data.get('clinic_name') == selected_clinic and (doctor_data.get('specialist') == selected_specialty or selected_specialty == "All Specialty"):
+                    print(f"Match found for doctor {doctor_id}")  # Debugging print statement
 
                 clinic_frame = tk.Frame(row, borderwidth=2, relief="groove", width=300, height=100)
                 clinic_frame.grid(row=count//4, column=count%4, padx=10, pady=30, sticky="w")
@@ -449,7 +454,7 @@ class PatientPage(tk.Frame):
         selected_clinic_name = self.clinic_var.get()
 
         filtered_doctors = [doctor for doctor in doctors.values() if doctor['clinic_state'] == selected_clinic_state and doctor['clinic_name'] == selected_clinic_name]
-
+        
         label = tk.Label(self, text="Doctor Information", bg="#f6f6e9", font=bold12)
         label.grid(row=1, column=3, padx=20, pady=10, sticky="w")
 
@@ -458,9 +463,9 @@ class PatientPage(tk.Frame):
             doctor_specialties = [doctor_specialty]
         else:
             # Get the names and specialties of the filtered doctors
-            doctor_names = [doctor['username'] for doctor in filtered_doctors]
+            doctor_names = [doctor['username'] for doctor in filtered_doctors if doctor['status']=="Approved"]
             doctor_names = ["Choose Doctor"]
-            doctor_specialties = [doctor['specialist'] for doctor in filtered_doctors]
+            doctor_specialties = [doctor['specialist'] for doctor in filtered_doctors if doctor['status']=="Approved"]
             doctor_specialties = ["Choose Specialty"]
 
         self.doctor_specialty_var = tk.StringVar()
@@ -552,7 +557,7 @@ class PatientPage(tk.Frame):
         
         # Get the doctor specialties
         filtered_specialties = [doctor for doctor in doctors.values() if doctor['clinic_state'] == selected_clinic_state and doctor['clinic_name'] == selected_clinic_name]
-        doctor_specialties = sorted(set(doctor['specialist'] for doctor in filtered_specialties))
+        doctor_specialties = sorted(set(doctor['specialist'] for doctor in filtered_specialties if doctor['status'] == "Approved"))
         self.doctor_specialty_dropdown['values'] = ["Choose Specialty", *doctor_specialties] if doctor_specialties else ["No specialties available"]
         self.doctor_specialty_dropdown.current(0)
 
@@ -562,7 +567,7 @@ class PatientPage(tk.Frame):
 
         # Get the doctor names
         filtered_doctors = [doctor for doctor in doctors.values() if doctor['clinic_state'] == selected_clinic_state and doctor['clinic_name'] == selected_clinic_name and doctor['specialist'] == selected_specialty]
-        doctor_names = [doctor['username'] for doctor in filtered_doctors]
+        doctor_names = sorted(set(doctor['username'] for doctor in filtered_doctors if doctor['status'] == "Approved"))
         self.doctor_name_dropdown['values'] = doctor_names if doctor_names else ["No doctors available"]
         self.doctor_name_dropdown.current(0)
 

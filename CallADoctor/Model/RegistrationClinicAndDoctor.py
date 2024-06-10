@@ -382,7 +382,8 @@ class RegistrationPage(tk.Frame):
             'username': username,
             'email': email,
             'phone': phone,
-            'password': password
+            'password': password,
+            'status': 'Pending'
         })
 
     def save_doctor(self, doctor_id, role, clinic_name, clinic_state, ic_passport_id, username, email, phone, password, specialist):
@@ -400,7 +401,8 @@ class RegistrationPage(tk.Frame):
             'email': email,
             'phone': phone,
             'password': password,
-            'specialist': specialist
+            'specialist': specialist,
+            'status': 'Pending'
         })        
     
     def login(self):

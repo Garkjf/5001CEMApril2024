@@ -169,12 +169,12 @@ class LoginPage(tk.Frame):
                         return self.patientScreen(self.ic_passport_id_entry.get())
 
                 elif role == "Doctor":
-                    if value['ic_passport_id'] == ic_passport_id and value['password'] == password and clinic == value['clinic_name'] and clinic_state == value['clinic_state']:
+                    if value['ic_passport_id'] == ic_passport_id and value['password'] == password and clinic == value['clinic_name'] and clinic_state == value['clinic_state'] and value['status'] == "Approved":
                         messagebox.showinfo("Success", "Login Successful")
                         return self.doctorScreen(self.ic_passport_id_entry.get())
                     
                 elif role == "Clinic Admin":
-                    if value['ic_passport_id'] == ic_passport_id and value['password'] == password and clinic == value['clinic_name'] and clinic_state == value['clinic_state']:
+                    if value['ic_passport_id'] == ic_passport_id and value['password'] == password and clinic == value['clinic_name'] and clinic_state == value['clinic_state'] and value['status'] == "Approved":
                         return self.clinicAdminScreen(self.ic_passport_id_entry.get())
                 else:
                     raise Exception("Invalid role")
