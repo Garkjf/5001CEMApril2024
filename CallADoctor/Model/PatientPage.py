@@ -349,10 +349,10 @@ class PatientPage(tk.Frame):
             tk.Label(info_frame, text=label, font=("Helvetica", 12, "bold"), bg="#d9d9d9", padx=30, pady=10).grid(row=i, column=0, sticky="w")
             tk.Label(info_frame, text=value, font=("Helvetica", 10), bg="#d9d9d9", padx=30, pady=10).grid(row=i, column=1, sticky="w")
         
-        make_appointment_btn = tk.Button(self, text="Reserve Your Appointment", bg="#0275DD", fg="#ffffff", command=app.makeAppointment)
+        make_appointment_btn = tk.Button(self, text="Reserve Your Appointment", bg="#0275DD", fg="#ffffff", command=lambda :self.makeAppointment(clinic_name, clinic_state, doctor_name, doctor_specialty))
         make_appointment_btn.grid(columnspan=1, pady=10)    
 
-    def makeAppointment(self):
+    def makeAppointment(self, clinic_name, clinic_state, doctor_name, doctor_specialty):
         self.clearClinicInfo()  
         self.clearFilters()
 
@@ -362,11 +362,9 @@ class PatientPage(tk.Frame):
         bold10 = Font(self.master, size=10, weight=BOLD)
         label = tk.Label(self, text="Reserve Your Time Slot", bg="#F6F6E9", font=bold14)
         label.grid(row=0, column=0, padx=20, pady=10, sticky="w")
-        with open('login_data.txt', 'r') as f:
-            ic_passport_id = f.read().strip()
 
         # get patient information
-        patient_ref = db.reference('patients/' + ic_passport_id)
+        patient_ref = db.reference('patients/' + self.patient_id)
         patient_data = patient_ref.get()
 
         label = tk.Label(self, text="Patient Information", bg="#F6F6E9", font=bold12)
@@ -405,16 +403,20 @@ class PatientPage(tk.Frame):
 
         clinic_state_options = ["Choose Clinic State"]
         clinic_states = set()
-        
-        for clinic_id, clinic_data in clinics.items():
-            clinic_name = clinic_data.get('clinic_name')
-            clinic_state = clinic_data.get('clinic_state')
-            if clinic_name not in clinic_names:
-                clinic_options.append(clinic_name)
-                clinic_names.add(clinic_name)
-            if clinic_state not in clinic_states:
-                clinic_state_options.append(clinic_state)
-                clinic_states.add(clinic_state)
+    
+        if clinic_name is not None and clinic_state is not None:
+            clinic_options = [clinic_name]
+            clinic_state_options = [clinic_state]
+        else:
+            for clinic_id, clinic_data in clinics.items():
+                clinic_name = clinic_data.get('clinic_name')
+                clinic_state = clinic_data.get('clinic_state')
+                if clinic_name not in clinic_names:
+                    clinic_options.append(clinic_name)
+                    clinic_names.add(clinic_name)
+                if clinic_state not in clinic_states:
+                    clinic_state_options.append(clinic_state)
+                    clinic_states.add(clinic_state)
 
         label = tk.Label(self, text="Clinic Information", bg="#f6f6e9", font=bold12)
         label.grid(row=7, column=0, padx=20, pady=10, sticky="w")
@@ -451,11 +453,15 @@ class PatientPage(tk.Frame):
         label = tk.Label(self, text="Doctor Information", bg="#f6f6e9", font=bold12)
         label.grid(row=1, column=3, padx=20, pady=10, sticky="w")
 
-        # Get the names and specialties of the filtered doctors
-        doctor_names = [doctor['username'] for doctor in filtered_doctors]
-        doctor_names = ["Choose Doctor"]
-        doctor_specialties = [doctor['specialist'] for doctor in filtered_doctors]
-        doctor_specialties = ["Choose Specialty"]
+        if doctor_name is not None and doctor_specialty is not None:
+            doctor_names = [doctor_name]
+            doctor_specialties = [doctor_specialty]
+        else:
+            # Get the names and specialties of the filtered doctors
+            doctor_names = [doctor['username'] for doctor in filtered_doctors]
+            doctor_names = ["Choose Doctor"]
+            doctor_specialties = [doctor['specialist'] for doctor in filtered_doctors]
+            doctor_specialties = ["Choose Specialty"]
 
         self.doctor_specialty_var = tk.StringVar()
         self.label = tk.Label(self, text="Select Doctor Specialty", bg="#f6f6e9", font=bold10)
@@ -501,7 +507,7 @@ class PatientPage(tk.Frame):
         self.appointment_time_entry.bind("<<DateEntrySelected>>", self.check_time_selection)
 
         # Create save button
-        save_button = tk.Button(self, text="submit", command=self.save_appointment, width=20, bg="#0275DD", fg="#ffffff")
+        save_button = tk.Button(self, text="submit", command=lambda : self.save_appointment(username, email, phone), width=20, bg="#0275DD", fg="#ffffff")
         save_button.grid(row=10, columnspan=5, pady=20, padx=20)
 
     def check_clinic_selection(self, event):
@@ -643,14 +649,14 @@ class PatientPage(tk.Frame):
         if selected_time_slot == "Choose Time Slot":
             messagebox.showerror("Error", "Please select an appointment time slot")
         
-    def save_appointment(self):
+    def save_appointment(self, username, email, phone):
         try:
             tz = pytz.timezone('Asia/Kuala_Lumpur')
             current_date = datetime.now(tz)
             formatted_current_date = current_date.strftime('%m/%d/%Y %H:%M')
-            username = self.username_entry.get()
-            email = self.email_entry.get()
-            phone = self.phone_entry.get()
+            username = username
+            email = email
+            phone = phone
             clinic_name = self.clinic_var.get()
             clinic_state = self.clinic_state_var.get()
             doctor_name = self.doctor_name_var.get()
@@ -658,17 +664,25 @@ class PatientPage(tk.Frame):
             # convert the appointment date to a string dmy format
             appointment_date = datetime.strptime(self.appointment_date_entry.get_date(), '%m/%d/%y').date()
             appointment_date_str = appointment_date.strftime('%m/%d/%y')
-            appointment_time = self.appointment_time_entry.get()
-
-            # Check if the selected date and time is in the past
-            selected_datetime = datetime.combine(appointment_date, datetime.strptime(appointment_time, '%H:%M').time(), tzinfo=tz)            
-            if selected_datetime < current_date:
-                messagebox.showerror("Error", "Past dates are not allowed. Please select a future date.")
-                return
+            appointment_time = self.appointment_time_entry.get()            
             
             if appointment_time == "Choose Time Slot":
                 messagebox.showerror("Error", "Please select an appointment time slot")
                 return
+
+            elif appointment_time == "No Time Slot Available":
+                messagebox.showerror("Error", "No time slot available for the selected date. Please select another date.")
+                return
+            
+            else: 
+                # Check if the selected date and time is in the past
+                selected_datetime = datetime.combine(appointment_date, datetime.strptime(appointment_time, '%H:%M').time(), tzinfo=tz)            
+                if selected_datetime < current_date:
+                    messagebox.showerror("Error", "Past dates are not allowed. Please select a future date.")
+                    return
+                elif selected_datetime > current_date + relativedelta(months=6):
+                    messagebox.showerror("Error", "Appointments can only be booked within 6 months from the current date.")
+                    return
             
             # Check if the selected date and time is already booked
             appointments_ref = db.reference('appointment')
@@ -812,7 +826,7 @@ class PatientPage(tk.Frame):
 # Main Execution
 if __name__ == "__main__":
 
-    patient_id = sys.argv[0]
+    patient_id = sys.argv[1]
 
     root = tk.Tk()  # Create a new Tk root window
     root.title("Call a Doctor - Patient Page")  # Set the title of the window
@@ -864,7 +878,7 @@ if __name__ == "__main__":
     search_clinics_btn = tk.Button(nav_bar, text="Search Clinics", command=app.searchClinic)
     search_clinics_btn.pack(side="left", fill="x")
 
-    make_appointment_btn = tk.Button(nav_bar, text="Make Appointment", command=app.makeAppointment)
+    make_appointment_btn = tk.Button(nav_bar, text="Make Appointment", command=lambda :app.makeAppointment(None, None, None, None))
     make_appointment_btn.pack(side="left", fill="x")
 
     prescription_btn = tk.Button(nav_bar, text="Prescription", command=app.viewPrescriptionHistory)
