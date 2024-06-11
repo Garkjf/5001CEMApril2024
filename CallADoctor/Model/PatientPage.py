@@ -768,18 +768,22 @@ class PatientPage(tk.Frame):
         prescriptions_ref = db.reference('prescriptions')
 
         # Retrieve the prescription data
-        prescriptions = prescriptions_ref.order_by_child('patientID').equal_to(self.patient_id).get()
+        prescriptions = prescriptions_ref.order_by_child('patientID').get()
+        # equal_to(str(self.patient_id))
 
         count = 0
         row = tk.Frame(self, bg="#F6F6E9")
         row.grid()
 
+        # doctors.get(doctor_id).get('doctorName')
+
         for prescription, prescription_data in prescriptions.items():
             prescrip_date = prescription_data.get('date')
             doctor_name = prescription_data.get('doctorID')
             treatment = prescription_data.get('treatment')
-            symptoms = prescription_data.get('symtomps')
+            symptoms = prescription_data.get('symptoms')
             remark = prescription_data.get('remark')
+            print(prescription_data)
 
             # Frame for each prescription
             prescrip_frame = tk.Frame(row, borderwidth=2, relief="groove", width=300, height=150)
@@ -836,22 +840,8 @@ class PatientPage(tk.Frame):
         status_display = tk.Label(status_window, textvariable=status_var, bg="#FFFFFF", width=30, border=2, relief="groove")
         status_display.pack(pady=10)
 
+
         def update_status(self,appointmentNo):
-            status_window = tk.Toplevel(self)
-        status_window.title("Appointment Status")
-        status_window.geometry("400x200")
-        status_window.configure(bg="#F6F6E9")
-
-        status_label = tk.Label(status_window, text="Appointment Status", bg="#F6F6E9", font=("Arial", 14, "bold"))
-        status_label.pack(pady=10)
-
-        status_var = tk.StringVar()
-        status_var.set("Pending")
-
-        status_display = tk.Label(status_window, textvariable=status_var, bg="#FFFFFF", width=30, border=2, relief="groove")
-        status_display.pack(pady=10)
-
-        def update_status():
             appointment_ref = db.reference('appointments/' + appointmentNo)
             appointment_data = appointment_ref.get()
             if appointment_data:
