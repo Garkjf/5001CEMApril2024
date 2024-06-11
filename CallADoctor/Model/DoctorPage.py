@@ -110,6 +110,7 @@ class DoctorPage(tk.Frame):
         
         self.showMainPage(patients)
 
+    # Create back button with command
     def placeBackButton(self, frame, command):
         # Load the back icon
         back_icon = tk.PhotoImage(file=backIconImage)
@@ -319,6 +320,7 @@ class DoctorPage(tk.Frame):
                                     command = lambda: self.addPrescription(patient_id))
         submit_button.grid(row=6, column=0, pady=10, sticky="w")
 
+    # Add new prescription function
     def addPrescription(self, patient_id):
         newPrescription = {
             "diagnosis": self.diagnosis_entry.get(),
@@ -332,6 +334,7 @@ class DoctorPage(tk.Frame):
         messagebox.showinfo("Success", "Created new prescription!")
         self.showAddPrescriptionPage(patient_id)
 
+    # Assigned Reuqest Page
     def showAssignedRequestPage(self):
         self.clearPage()
 
@@ -378,6 +381,7 @@ class DoctorPage(tk.Frame):
         self.master.quit()
 
 if __name__ == "__main__":
+    # Get doctor_id from command argument
     doctor_id = sys.argv[1]
     
     root = tk.Tk()
@@ -422,6 +426,7 @@ if __name__ == "__main__":
     # Body
     app = DoctorPage(second_frame, doctor_id)
 
+    # Create buttons for navigation bar
     search_clinics_btn = tk.Button(nav_bar, text="Search Patients", 
                                    command=lambda: app.showMainPage(app.patients))
     search_clinics_btn.pack(side="left", fill="x")
