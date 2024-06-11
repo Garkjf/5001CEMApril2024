@@ -791,13 +791,13 @@ class PatientPage(tk.Frame):
             date_label_value = tk.Label(prescrip_frame, text=prescrip_date)
             date_label_value.grid(row=0, column=1, sticky="w", padx=5, pady=5)
 
-            # Doctor Name
+            # Doctor 
             doctor_label_text = tk.Label(prescrip_frame, text="Doctor: ", font=bold12)
             doctor_label_text.grid(row=1, column=0, sticky="w", padx=5, pady=5)
             doctor_label_value = tk.Label(prescrip_frame, text=doctor_name)
             doctor_label_value.grid(row=1, column=1, sticky="w", padx=5, pady=5)
 
-            # Medication
+            # Treatement
             treatment_label_text = tk.Label(prescrip_frame, text="Treatment: ", font=bold12)
             treatment_label_text.grid(row=2, column=0, sticky="w", padx=5, pady=5)
             treatment_label_value = tk.Label(prescrip_frame, text=treatment)
@@ -822,7 +822,44 @@ class PatientPage(tk.Frame):
         total_label.grid(row=3, column=0, pady=10, padx=10, sticky="w")
 
     def appointmentRequest(self):
-        pass      
+        status_window = tk.Toplevel(self)
+        status_window.title("Appointment Status")
+        status_window.geometry("400x200")
+        status_window.configure(bg="#F6F6E9")
+
+        status_label = tk.Label(status_window, text="Appointment Status", bg="#F6F6E9", font=("Arial", 14, "bold"))
+        status_label.pack(pady=10)
+
+        status_var = tk.StringVar()
+        status_var.set("Pending")
+
+        status_display = tk.Label(status_window, textvariable=status_var, bg="#FFFFFF", width=30, border=2, relief="groove")
+        status_display.pack(pady=10)
+
+        def update_status(self,appointmentNo):
+            status_window = tk.Toplevel(self)
+        status_window.title("Appointment Status")
+        status_window.geometry("400x200")
+        status_window.configure(bg="#F6F6E9")
+
+        status_label = tk.Label(status_window, text="Appointment Status", bg="#F6F6E9", font=("Arial", 14, "bold"))
+        status_label.pack(pady=10)
+
+        status_var = tk.StringVar()
+        status_var.set("Pending")
+
+        status_display = tk.Label(status_window, textvariable=status_var, bg="#FFFFFF", width=30, border=2, relief="groove")
+        status_display.pack(pady=10)
+
+        def update_status():
+            appointment_ref = db.reference('appointments/' + appointmentNo)
+            appointment_data = appointment_ref.get()
+            if appointment_data:
+                status = appointment_data.get('status')
+                status_var.set(status)
+            status_window.after(10000, update_status)  
+
+        update_status()     
 
     def logout(self):
         start_login()
@@ -831,7 +868,7 @@ class PatientPage(tk.Frame):
 # Main Execution
 if __name__ == "__main__":
 
-    patient_id = sys.argv[1]
+    patient_id = sys.argv[0]
 
     root = tk.Tk()  # Create a new Tk root window
     root.title("Call a Doctor - Patient Page")  # Set the title of the window
