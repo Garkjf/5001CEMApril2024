@@ -9,7 +9,6 @@ serviceAccountKeyFile = os.path.join(dir, '../calladoctor-serviceAccountKey.json
 logoImageFile = os.path.join(dir, '../Images/CallADoctor-logo-small.png')  # Change the path to your own logo image
 backIconImage = os.path.join(dir, '../Images/back-icon.png') # Change the path to your own logo image
 
-
 class SystemAdministrator:
     def __init__(self, root, system_admin):
         self.systemAdmin_id = None
@@ -33,9 +32,6 @@ class SystemAdministrator:
         self.updateRequestList()
 
     def manageClinics(self):
-        self.window.title("Manage Clinic Requests")
-        self.window.geometry("800x500")
-
         search_frame = tk.Frame(self.window)
         search_frame.pack(fill="x", padx=20, pady=10)
 
