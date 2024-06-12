@@ -767,6 +767,11 @@ class PatientPage(tk.Frame):
         # Get a reference to the prescriptions node in the database
         prescriptions_ref = db.reference('prescriptions')
 
+        # Get the patienID
+        patient_ref = db.reference('patients/' + self.patient_id)
+        patient_data = patient_ref.get()
+        patient_id = patient_data.get('patientID')
+
         # Retrieve the prescription data
         prescriptions = prescriptions_ref.order_by_child('patientID').get()
         # equal_to(str(self.patient_id))
@@ -778,48 +783,49 @@ class PatientPage(tk.Frame):
         # doctors.get(doctor_id).get('doctorName')
 
         for prescription, prescription_data in prescriptions.items():
-            prescrip_date = prescription_data.get('date')
-            doctor_name = prescription_data.get('doctorID')
-            treatment = prescription_data.get('treatment')
-            symptoms = prescription_data.get('symptoms')
-            remark = prescription_data.get('remark')
-            print(prescription_data)
+            if prescription_data.get('patientID') == patient_id:
+                prescrip_date = prescription_data.get('date')
+                doctor_name = prescription_data.get('doctorID')
+                treatment = prescription_data.get('treatment')
+                symptoms = prescription_data.get('symptoms')
+                remark = prescription_data.get('remark')
+                print(prescription_data)
 
-            # Frame for each prescription
-            prescrip_frame = tk.Frame(row, borderwidth=2, relief="groove", width=300, height=150)
-            prescrip_frame.grid(row=count//2, column=count%2, padx=10, pady=30, sticky="w")
+                # Frame for each prescription
+                prescrip_frame = tk.Frame(row, borderwidth=2, relief="groove", width=300, height=150)
+                prescrip_frame.grid(row=count//2, column=count%2, padx=10, pady=30, sticky="w")
 
-            # Prescription Date
-            date_label_text = tk.Label(prescrip_frame, text="Date: ", font=bold12)
-            date_label_text.grid(row=0, column=0, sticky="w", padx=5, pady=5)
-            date_label_value = tk.Label(prescrip_frame, text=prescrip_date)
-            date_label_value.grid(row=0, column=1, sticky="w", padx=5, pady=5)
+                # Prescription Date
+                date_label_text = tk.Label(prescrip_frame, text="Date: ", font=bold12)
+                date_label_text.grid(row=0, column=0, sticky="w", padx=5, pady=5)
+                date_label_value = tk.Label(prescrip_frame, text=prescrip_date)
+                date_label_value.grid(row=0, column=1, sticky="w", padx=5, pady=5)
 
-            # Doctor 
-            doctor_label_text = tk.Label(prescrip_frame, text="Doctor: ", font=bold12)
-            doctor_label_text.grid(row=1, column=0, sticky="w", padx=5, pady=5)
-            doctor_label_value = tk.Label(prescrip_frame, text=doctor_name)
-            doctor_label_value.grid(row=1, column=1, sticky="w", padx=5, pady=5)
+                # Doctor 
+                doctor_label_text = tk.Label(prescrip_frame, text="Doctor: ", font=bold12)
+                doctor_label_text.grid(row=1, column=0, sticky="w", padx=5, pady=5)
+                doctor_label_value = tk.Label(prescrip_frame, text=doctor_name)
+                doctor_label_value.grid(row=1, column=1, sticky="w", padx=5, pady=5)
 
-            # Treatement
-            treatment_label_text = tk.Label(prescrip_frame, text="Treatment: ", font=bold12)
-            treatment_label_text.grid(row=2, column=0, sticky="w", padx=5, pady=5)
-            treatment_label_value = tk.Label(prescrip_frame, text=treatment)
-            treatment_label_value.grid(row=2, column=1, sticky="w", padx=5, pady=5)
+                # Treatement
+                treatment_label_text = tk.Label(prescrip_frame, text="Treatment: ", font=bold12)
+                treatment_label_text.grid(row=2, column=0, sticky="w", padx=5, pady=5)
+                treatment_label_value = tk.Label(prescrip_frame, text=treatment)
+                treatment_label_value.grid(row=2, column=1, sticky="w", padx=5, pady=5)
 
-            # Symtomps
-            symptoms_label_text = tk.Label(prescrip_frame, text="Symptoms: ", font=bold12)
-            symptoms_label_text.grid(row=3, column=0, sticky="w", padx=5, pady=5)
-            symptoms_label_value = tk.Label(prescrip_frame, text=symptoms)
-            symptoms_label_value.grid(row=3, column=1, sticky="w", padx=5, pady=5)
+                # Symtomps
+                symptoms_label_text = tk.Label(prescrip_frame, text="Symptoms: ", font=bold12)
+                symptoms_label_text.grid(row=3, column=0, sticky="w", padx=5, pady=5)
+                symptoms_label_value = tk.Label(prescrip_frame, text=symptoms)
+                symptoms_label_value.grid(row=3, column=1, sticky="w", padx=5, pady=5)
 
-            # Remark
-            remark_label_text = tk.Label(prescrip_frame, text="Remark: ", font=bold12)
-            remark_label_text.grid(row=4, column=0, sticky="w", padx=5, pady=5)
-            remark_label_value = tk.Label(prescrip_frame, text=remark)
-            remark_label_value.grid(row=4, column=1, sticky="w", padx=5, pady=5)
+                # Remark
+                remark_label_text = tk.Label(prescrip_frame, text="Remark: ", font=bold12)
+                remark_label_text.grid(row=4, column=0, sticky="w", padx=5, pady=5)
+                remark_label_value = tk.Label(prescrip_frame, text=remark)
+                remark_label_value.grid(row=4, column=1, sticky="w", padx=5, pady=5)
 
-            count += 1
+                count += 1
 
         # Update the total number of prescriptions found
         total_label = tk.Label(self, text=f"Total prescriptions found: {count}", bg="#F6F6E9", font=bold10)
@@ -858,7 +864,7 @@ class PatientPage(tk.Frame):
 # Main Execution
 if __name__ == "__main__":
 
-    patient_id = sys.argv[0]
+    patient_id = sys.argv[1]
 
     root = tk.Tk()  # Create a new Tk root window
     root.title("Call a Doctor - Patient Page")  # Set the title of the window
