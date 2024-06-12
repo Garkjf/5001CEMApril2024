@@ -1,6 +1,14 @@
 import tkinter as tk
 from tkinter import messagebox
 import sys
+import os
+
+dir = os.path.dirname(__file__)
+
+serviceAccountKeyFile = os.path.join(dir, '../calladoctor-serviceAccountKey.json')   # Change the path to your own serviceAccountKey.json
+logoImageFile = os.path.join(dir, '../Images/CallADoctor-logo-small.png')  # Change the path to your own logo image
+backIconImage = os.path.join(dir, '../Images/back-icon.png') # Change the path to your own logo image
+
 
 class SystemAdministrator:
     def __init__(self, root, system_admin):
@@ -64,11 +72,10 @@ class SystemAdministrator:
 
 
 if __name__ == "__main__":
-    system_admin = sys.argv[1] if len(sys.argv) > 1 else "default_admin"
-    logoImageFile = "path_to_logo_image.png"  # Define the path to your logo image file
+    system_admin = sys.argv[0] 
 
     root = tk.Tk()  # Create a new Tk root window
-    root.title("Call a Doctor - Patient Page")  # Set the title of the window
+    root.title("Call a Doctor - System Administrator")  # Set the title of the window
     root.geometry("1200x600")
     root.configure(background='#f6f6e9')
 
