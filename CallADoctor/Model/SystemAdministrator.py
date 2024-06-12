@@ -118,8 +118,7 @@ if __name__ == "__main__":
     # Body
     app = SystemAdministrator(second_frame, system_admin)  # Pass the second_frame window to your SystemAdministrator class
 
-    search_clinics_btn = tk.Button(nav_bar, text="Search Clinics", command=app.manageClinics)
-    search_clinics_btn.pack(side="left", fill="x")
+   
 
     # Add more buttons here as needed
 
