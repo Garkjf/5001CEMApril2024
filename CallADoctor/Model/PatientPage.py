@@ -765,6 +765,7 @@ class PatientPage(tk.Frame):
 
         # Get a reference to the prescriptions node in the database
         prescriptions_ref = db.reference('prescriptions')
+        
 
         # Get the patienID
         patient_ref = db.reference('patients/' + self.patient_id)
@@ -784,7 +785,11 @@ class PatientPage(tk.Frame):
         for prescription, prescription_data in prescriptions.items():
             if prescription_data.get('patientID') == patient_id:
                 prescrip_date = prescription_data.get('date')
-                doctor_name = prescription_data.get('doctorID')
+                doctor_id = prescription_data.get('doctorID')
+                doctor_ref = db.reference('doctors/' + doctor_id)
+                doctor_data = doctor_ref.get()
+                doctor_name = doctor_data.get('username')
+                
                 treatment = prescription_data.get('treatment')
                 symptoms = prescription_data.get('symptoms')
                 remark = prescription_data.get('remark')
