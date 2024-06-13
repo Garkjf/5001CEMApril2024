@@ -4,7 +4,6 @@ from tkinter import messagebox
 from firebase_admin import credentials, initialize_app ,db
 import os
 import subprocess
-from SharePath import start_registration, start_patient, start_doctor, start_admin
 
 # Create relative file paths
 dir = os.path.dirname(__file__)

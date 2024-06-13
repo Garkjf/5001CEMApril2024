@@ -6,7 +6,6 @@ from firebase_admin import credentials,initialize_app, db
 import os
 import subprocess
 import re
-from SharePath import start_login
 import uuid
 
 # Create relative file paths

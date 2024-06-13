@@ -11,7 +11,6 @@ import os
 import subprocess
 import sys
 import PatientPage
-from SharePath import start_login
 
 # Create relative file paths
 dir = os.path.dirname(__file__)
@@ -266,28 +265,28 @@ class PatientPage(tk.Frame):
                 if doctor_data.get('clinic_state')  == selected_state and doctor_data.get('clinic_name') == selected_clinic and (doctor_data.get('specialist') == selected_specialty or selected_specialty == "All Specialty"):
                     print(f"Match found for doctor {doctor_id}")  # Debugging print statement
 
-                clinic_frame = tk.Frame(row, borderwidth=2, relief="groove", width=300, height=100)
-                clinic_frame.grid(row=count//4, column=count%4, padx=10, pady=30, sticky="w")
+                    clinic_frame = tk.Frame(row, borderwidth=2, relief="groove", width=300, height=100)
+                    clinic_frame.grid(row=count//4, column=count%4, padx=10, pady=30, sticky="w")
 
-                doctor_name = doctor_data.get('username')
-                doctor_specialty = doctor_data.get('specialist')
+                    doctor_name = doctor_data.get('username')
+                    doctor_specialty = doctor_data.get('specialist')
 
-                # Clinic Name
-                doctor_label_text = tk.Label(clinic_frame, text="Doctor: ", font= bold12)
-                doctor_label_text.grid(row=0, column=count, sticky="w", padx=10, pady=5)
-                doctor_label_value = tk.Label(clinic_frame, text=doctor_name)
-                doctor_label_value.grid(row=0, column=count+1, sticky="w", padx=10, pady=5)
+                    # Clinic Name
+                    doctor_label_text = tk.Label(clinic_frame, text="Doctor: ", font= bold12)
+                    doctor_label_text.grid(row=0, column=count, sticky="w", padx=10, pady=5)
+                    doctor_label_value = tk.Label(clinic_frame, text=doctor_name)
+                    doctor_label_value.grid(row=0, column=count+1, sticky="w", padx=10, pady=5)
 
-                # Clinic State
-                specialty_label_text = tk.Label(clinic_frame, text="Specialty: ", font= bold12)
-                specialty_label_text.grid(row=1, column=count, sticky="w", padx=10, pady=5)
-                specialty_label_value = tk.Label(clinic_frame, text=doctor_specialty)
-                specialty_label_value.grid(row=1, column=count+1, sticky="w", padx=10, pady=5)
+                    # Clinic State
+                    specialty_label_text = tk.Label(clinic_frame, text="Specialty: ", font= bold12)
+                    specialty_label_text.grid(row=1, column=count, sticky="w", padx=10, pady=5)
+                    specialty_label_value = tk.Label(clinic_frame, text=doctor_specialty)
+                    specialty_label_value.grid(row=1, column=count+1, sticky="w", padx=10, pady=5)
 
-                view_more_button = tk.Button(clinic_frame, text="View More",bg="#0275DD", fg="#ffffff", command=lambda doctor_id=doctor_id: self.viewDoctorInformation(doctor_id, selected_clinic, selected_state))
-                view_more_button.grid(row=2, column=count, columnspan=2, padx=10, pady=5)
+                    view_more_button = tk.Button(clinic_frame, text="View More",bg="#0275DD", fg="#ffffff", command=lambda doctor_id=doctor_id: self.viewDoctorInformation(doctor_id, selected_clinic, selected_state))
+                    view_more_button.grid(row=2, column=count, columnspan=2, padx=10, pady=5)
 
-                count += 1
+                    count += 1
 
         # Update the total number of doctor found
         try:

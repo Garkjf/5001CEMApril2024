@@ -2,11 +2,10 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 import firebase_admin
-from firebase_admin import credentials,initialize_app, db
+from firebase_admin import credentials,initialize_app, db, get_app
 import os
 import subprocess
 import re
-from SharePath import start_login
 import uuid
 
 # Create relative file paths
@@ -17,7 +16,10 @@ logoImageFile = os.path.join(dir, '../Images/CallADoctor-logo.png')  # Change th
 
 # Initialize Firebase
 cred = credentials.Certificate(serviceAccountKeyFile)
-initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
+try:
+    get_app()
+except ValueError as e:
+    initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
 
 def start_login():
     subprocess.call(["python", os.path.join(dir, 'Login.py')])
