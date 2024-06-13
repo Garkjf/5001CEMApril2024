@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import sys
 import os
+from firebase_admin import credentials, initialize_app ,db
 
 dir = os.path.dirname(__file__)
 
@@ -10,16 +11,18 @@ logoImageFile = os.path.join(dir, '../Images/CallADoctor-logo-small.png')  # Cha
 backIconImage = os.path.join(dir, '../Images/back-icon.png') # Change the path to your own logo image
 
 class SystemAdministrator:
-    def __init__(self, root, system_admin):
+    def __init__(self, root):
         self.systemAdmin_id = None
         self.name = None
         self.email = None
         self.phone_number = None
         self.requests = [] 
-        self.system_admin = system_admin
+        # self.system_admin = system_admin
 
         self.window = root
         self.manageClinics()
+        
+        
 
     def approveClinic(self, clinic):
         clinic['status'] = 'Approved'
@@ -32,6 +35,22 @@ class SystemAdministrator:
         self.updateRequestList()
 
     def manageClinics(self):
+        cred = credentials.Certificate(serviceAccountKeyFile)
+        initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
+        # get clinic information
+        clinics_ref = db.reference('clinicAdmins')
+
+        clinics = clinics_ref.get()
+
+        clinic_state_options = ["All"]
+        clinic_states = set()
+    
+        for clinic_id, clinic_data in clinics.items():
+            clinic_state = clinic_data.get('clinic_state')
+            if clinic_state not in clinic_states:
+                clinic_state_options.append(clinic_state)
+                clinic_states.add(clinic_state)
+
         search_frame = tk.Frame(self.window)
         search_frame.pack(fill="x", padx=20, pady=10)
 
@@ -41,9 +60,8 @@ class SystemAdministrator:
 
         tk.Label(search_frame, text="Search by State:").pack(side="left", padx=5)
         self.search_state_var = tk.StringVar()
-        self.search_state_var.set("All")
-        self.states = ["All", "Johor", "Kedah", "Kelantan", "Malacca", "Negeri Sembilan", "Pahang", "Penang", "Perak", "Perlis", "Sabah", "Sarawak", "Selangor", "Terengganu", "Kuala Lumpur", "Labuan", "Putrajaya"]
-        self.search_state_menu = tk.OptionMenu(search_frame, self.search_state_var, *self.states)
+        self.search_state_var.set("Choose State Clinics")
+        self.search_state_menu = tk.OptionMenu(search_frame, self.search_state_var, *clinic_state_options)
         self.search_state_menu.pack(side="left", padx=5)
 
         tk.Button(search_frame, text="Search", command=self.updateRequestList).pack(side="left", padx=5)
@@ -116,7 +134,7 @@ if __name__ == "__main__":
     logo_label.pack(side="left", fill="x")   
  
     # Body
-    app = SystemAdministrator(second_frame, system_admin)  # Pass the second_frame window to your SystemAdministrator class
+    app = SystemAdministrator(second_frame)  # Pass the second_frame window to your SystemAdministrator class
 
    
 
