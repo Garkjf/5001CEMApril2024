@@ -61,7 +61,7 @@ class DoctorPage(tk.Frame):
         label.grid(row=0, column=0, sticky="w")
 
         self.patient_name_entry = tk.Entry(top_frame)
-        self.patient_name_entry.grid(row=1, column=0, pady=10, sticky="W")
+        self.patient_name_entry.grid(row=1, column=0, pady=10, sticky="w")
 
         submit_button = tk.Button(top_frame, text="Search", bg="#0275DD", fg="#ffffff", 
                                   command=self.search_patient)
@@ -84,7 +84,8 @@ class DoctorPage(tk.Frame):
             name_label.grid(row=0, column=0, padx=20, sticky="w")
 
             view_button = tk.Button(patient_frame, text="View", bg="#0275DD", fg="#ffffff", command= 
-                                    self.handleViewPatient(patient_id))
+                                    self.handleViewPatient(patient_id, 
+                                                           lambda: self.showMainPage(self.patients)))
             view_button.grid(row=0, column=1, padx=10, pady=5, sticky="w")
 
             email_label = tk.Label(patient_frame, text=f"Email: {patient.get('email')}")
@@ -124,15 +125,15 @@ class DoctorPage(tk.Frame):
         patient_info_frame.grid(row=1, column=0, pady=10)
 
     # Redirect to patient prescription page
-    def handleViewPatient(self, patient_id):
-        return lambda: self.showPatientInfoPage(patient_id)
+    def handleViewPatient(self, patient_id, back_cmd):
+        return lambda: self.showPatientInfoPage(patient_id, back_cmd)
 
-    def showPatientInfoPage(self, patient_id):
+    def showPatientInfoPage(self, patient_id, back_cmd):
         self.clearPage()
 
         top_frame = tk.Frame(self, bg="#9AB892")
         top_frame.grid(column=0, row=0, sticky="w")
-        self.placeBackButton(top_frame, lambda: self.showMainPage(self.patients))
+        self.placeBackButton(top_frame, back_cmd)
 
         patient_info_frame = tk.Frame(top_frame, bg="#ffffff")
         patient_info_frame.grid(row=1, column=0, pady=20)
@@ -334,9 +335,10 @@ class DoctorPage(tk.Frame):
         messagebox.showinfo("Success", "Created new prescription!")
         self.showAddPrescriptionPage(patient_id)
 
-    # Assigned Reuqest Page
+    # Assigned Request Page
     def showAssignedRequestPage(self):
         self.clearPage()
+        self.appointments = self.getAppointments()
 
         top_frame = tk.Frame(self, bg="#9AB892")
         top_frame.grid(column=0, row=0, sticky="w")
@@ -346,34 +348,77 @@ class DoctorPage(tk.Frame):
         filter_frame = tk.Frame(top_frame, bg="#9AB892")
         filter_frame.grid(row=1, column=0, sticky='w', pady=10)
 
-        tk.Label(filter_frame, text="Filter By Doctor Name", bg="#9AB892")\
-            .grid(row=0, column=0, sticky='w', padx=10)
+        tk.Label(filter_frame, text="Search Patient Name", bg="#9AB892")\
+            .grid(row=0, column=0, sticky="w", padx=10)
 
-        doctor_name_options = ["All"]
-        self.doctor_name_var = tk.StringVar()
-        self.doctor_name_dropdown = ttk.Combobox(filter_frame, 
-                                                  textvariable=self.doctor_name_var, 
-                                                  values=doctor_name_options, 
-                                                  state="readonly")
-        self.doctor_name_dropdown.current(0)
-        self.doctor_name_dropdown.grid(row=1, column=0, padx=10, pady=10, sticky="w")
+        self.patient_name_entry = tk.Entry(filter_frame)
+        self.patient_name_entry.grid(row=1, column=0, pady=10, sticky="w")
 
-        tk.Label(filter_frame, text="Filter By Speciality", bg="#9AB892")\
-            .grid(row=0, column=1, sticky='w', padx=10)
+        self.requests_frame = tk.Frame(self, bg="#9AB892", padx=10, pady=10)
+        self.requests_frame.grid(row=2, column=0, sticky="w")
 
-        doctor_specialty_options = ["All Specialty"]
-        self.doctor_specialty_var = tk.StringVar()
-        self.doctor_specialty_dropdown = ttk.Combobox(filter_frame,
-                                                  textvariable=self.doctor_specialty_var, 
-                                                  values=doctor_specialty_options, 
-                                                  state="readonly")
-        self.doctor_specialty_dropdown.current(0)
-        self.doctor_specialty_dropdown.grid(row=1, column=1, padx=10, pady=10, sticky="w")
+        self.generateRequests(self.appointments)
 
         submit_button = tk.Button(filter_frame, padx=20, pady=5, text="Search", 
-                                    bg="#0275DD", fg="#ffffff")
-        submit_button.grid(row=1, column=2, padx=10, sticky="w")
+                                    bg="#0275DD", fg="#ffffff", 
+                                    command=self.search_requests)
+        submit_button.grid(row=1, column=1, padx=10, sticky="w")
+    
+    def search_requests(self):
+        [widgets.destroy() for widgets in self.requests_frame.winfo_children()]
 
+        search_key = self.patient_name_entry.get()
+        if not search_key:
+            result = self.appointments
+        else:
+            result = dict(filter(lambda item: search_key in item[1].get('username'), 
+                               self.appointments.items()))
+        
+        self.generateRequests(result)
+
+    def generateRequests(self, appointments):
+        for row, appointment in enumerate(appointments.values()):
+            patient_name = appointment.get('username')
+            patient_id = None
+
+            for p_id, patient in db.reference('patients').get().items():
+                if patient.get('username') == patient_name:
+                    patient_id = p_id
+                    break
+
+            patient_frame = tk.Frame(self.requests_frame, bg="#FFFFFF", padx=10, pady=10)
+
+            tk.Label(patient_frame, text=f"Created at: {appointment.get('created_at')}", 
+                     bg="#FFFFFF").grid(row=0, column=0, sticky="w")
+            
+            view_button = tk.Button(patient_frame, text="View", bg="#0275DD", fg="#ffffff", command= 
+                                    self.handleViewPatient(patient_id, 
+                                                           self.showAssignedRequestPage))
+            view_button.grid(row=0, column=1, sticky="e")
+
+            appointmentInfo = [
+                ("Patient Name", patient_name),
+                ("Email", appointment.get('email')),
+                ("Phone Number", appointment.get('phone')),
+                ("Appointment Date and Time", 
+                 f"{appointment.get('appointment_date')} {appointment.get('appointment_time')}"),
+            ]
+
+            for i, (label, value) in enumerate(appointmentInfo):
+                row, column = divmod(i, 2)
+                tk.Label(patient_frame, text=f"{label}: {value}", bg="#ffffff").\
+                grid(row=row+1, column=column, pady=10, sticky="w")
+
+            patient_frame.grid(row=row, column=0, sticky="w")
+
+    # Get list of appointments for self
+    def getAppointments(self):
+        appointments = db.reference('appointment').get()
+        doctor_name = self.doctors.get(doctor_id).get('username')
+
+        assignedRequests = dict(filter(lambda item: item[1].get('doctor_name') == doctor_name,
+                                       appointments.items()))
+        return assignedRequests
 
     # Logout
     def logout(self):
@@ -435,7 +480,7 @@ if __name__ == "__main__":
                                       command=app.showAssignedRequestPage)
     make_appointment_btn.pack(side="left", fill="x")
 
-    logout_btn = tk.Button(nav_bar, text="Logout", command=app.logout,)
+    logout_btn = tk.Button(nav_bar, text="Logout", command=app.logout)
     logout_btn.pack(side="left", fill="x")
 
     app.pack(fill="both", expand=True)
