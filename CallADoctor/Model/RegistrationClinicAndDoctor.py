@@ -253,7 +253,7 @@ class RegistrationPage(tk.Frame):
         if re.fullmatch(phone_number_regex, phone):
             return True
         else:
-            messagebox.showerror("Error", "PHone Number is not in Correct Format! \n Should use Malaysia Phone Number Format (01X-XXXXXXX)")
+            messagebox.showerror("Error", "Phone Number is not in Correct Format! \n Should use Malaysia Phone Number Format (01X-XXXXXXX)")
             return False
 
     def submit(self):
@@ -275,6 +275,9 @@ class RegistrationPage(tk.Frame):
         username = username.title()
 
         if not self.validate_email(email):
+            return
+        
+        if not self.validate_phone(phone):
             return
         
         if self.id_type_var.get() == "IC":

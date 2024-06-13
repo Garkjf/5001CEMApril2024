@@ -155,6 +155,9 @@ class RegistrationPage(tk.Frame):
         if not self.validate_email(email):
             return
         
+        if not self.validate_phone(phone):
+            return
+        
         if self.id_type_var.get() == "IC":
              if not self.validate_ic(ic_passport_id):
                 return
