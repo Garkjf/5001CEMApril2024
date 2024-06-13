@@ -42,7 +42,7 @@ class SystemAdministrator:
 
         clinics = clinics_ref.get()
 
-        clinic_state_options = ["Choose Clinic State"]
+        clinic_state_options = ["All"]
         clinic_states = set()
     
         for clinic_id, clinic_data in clinics.items():
@@ -60,7 +60,7 @@ class SystemAdministrator:
 
         tk.Label(search_frame, text="Search by State:").pack(side="left", padx=5)
         self.search_state_var = tk.StringVar()
-        self.search_state_var.set("All")
+        self.search_state_var.set("Choose State Clinics")
         self.search_state_menu = tk.OptionMenu(search_frame, self.search_state_var, *clinic_state_options)
         self.search_state_menu.pack(side="left", padx=5)
 
