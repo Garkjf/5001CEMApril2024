@@ -834,7 +834,7 @@ class PatientPage(tk.Frame):
     def appointmentRequest(self):
         status_window = tk.Toplevel(self)
         status_window.title("Appointment Status")
-        status_window.geometry("400x200")
+        
         status_window.configure(bg="#F6F6E9")
 
         status_label = tk.Label(status_window, text="Appointment Status", bg="#F6F6E9", font=("Arial", 14, "bold"))
