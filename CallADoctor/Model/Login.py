@@ -25,7 +25,7 @@ def start_doctor(doctor_id):
     subprocess.call(["python", os.path.join(dir, 'DoctorPage.py')] + [doctor_id])
 
 def start_admin(admin_id):
-    subprocess.call(["python", os.path.join(dir, 'ClinicAdministatorPage.py')] + [admin_id])
+    subprocess.call(["python", os.path.join(dir, 'doctor_list.py')] + [admin_id])
 
 class LoginPage(tk.Frame):
     def __init__(self, parent):
@@ -155,10 +155,14 @@ class LoginPage(tk.Frame):
             messagebox.showerror("Error", "Password is required")
             return
         
-        try:
+        try:                
             # Retrieve user data from Firebase
-            ref = db.reference(role.lower() + 's')
-            user_data = ref.get()
+            if role == "Clinic Admin":
+                ref = db.reference("clinicAdmins")
+                user_data = ref.get()
+            else :
+                ref = db.reference(role.lower() + 's')
+                user_data = ref.get()
 
             # Check if the entered username exists and the password matches
             for key, value in user_data.items():
@@ -204,7 +208,7 @@ class LoginPage(tk.Frame):
         self.master.destroy()
         start_doctor(doctor_id)
     
-    def adminScreen(self, admin_id):
+    def clinicAdminScreen(self, admin_id):
         self.master.destroy()
         start_admin(admin_id)
 
