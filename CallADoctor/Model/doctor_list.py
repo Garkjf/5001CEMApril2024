@@ -22,8 +22,18 @@ class DoctorListPage(tk.Frame):
         self.admin_id = admin_id
         self.parent = parent
         self.logo_path = logo_path
-        self.specialties = ["All", "Cardiology", "Dermatology", "Endocrinology", "Gastroenterology",
-                            "Neurology", "Oncology", "Pediatrics", "Psychiatry", "Radiology", "Urology"]
+
+        self.doctors = db.reference('doctors').get()
+        self.clinic = db.reference('clinicAdmins/' + admin_id).get()
+        clinic_name = self.clinic.get("clinic_name")
+        clinic_state = self.clinic.get("state")
+        specialties = []
+
+        for doctor_id, doctor_data in self.doctors.items():
+            if doctor_data.get("clinic_name") == clinic_name and doctor_data.get("state") == clinic_state:
+                specialties.extend([doctor_data.get("specialist")])
+
+        self.specialties = ["All"] + specialties
         self.selected_specialty = tk.StringVar(value="All")
         self.create_widgets()
         self.load_doctors()
@@ -55,16 +65,21 @@ class DoctorListPage(tk.Frame):
                 foreground=[('active', 'white')],
                 background=[('active', 'white')],  # Slightly darker green for active state
                 relief=[('pressed', 'sunken'), ('!pressed', 'raised')])
-        
+       
         # Open the doctor_list.py script using subprocess
-        def open_doctor_list():
-            subprocess.Popen(['python', os.path.join(dir, 'doctor_list.py')])
+        def open_doctor_list(admin_id):
+            subprocess.Popen(['python', os.path.join(dir, 'doctor_list.py')] + [admin_id])
 
         def open_patient_request(admin_id):
             subprocess.Popen(['python', os.path.join(dir, 'patient_request.py')] + [admin_id])
 
+        def start_login():
+            subprocess.Popen(["python", os.path.join(dir, 'Login.py')])
+
         # Add buttons to the header with switched positions
-        btn_doctor_list = ttk.Button(header_frame, text="Doctor List", style='TButton', command=open_doctor_list)
+        btn_logout = ttk.Button(header_frame, text="Logout", style='unactive.TButton', command=start_login)
+        btn_logout.pack(side=tk.RIGHT, padx=10, pady=10)
+        btn_doctor_list = ttk.Button(header_frame, text="Doctor List", style='TButton', command=lambda: open_doctor_list(self.admin_id))
         btn_doctor_list.pack(side=tk.RIGHT, padx=10, pady=10)
         btn_patient_request = ttk.Button(header_frame, text="Patient Request", style='TButton', command=lambda :open_patient_request(self.admin_id))
         btn_patient_request.pack(side=tk.RIGHT, padx=10, pady=10)
@@ -150,8 +165,12 @@ class DoctorListPage(tk.Frame):
         
         # Fetch doctor data from Firebase
         self.doctors = db.reference('doctors').get()
-        if self.doctors:
-            for doctor_id, doctor_data in self.doctors.items():
+        self.clinic = db.reference('clinicAdmins/' + admin_id).get()
+        clinic_name = self.clinic.get("clinic_name")
+        clinic_state = self.clinic.get("state")
+
+        for doctor_id, doctor_data in self.doctors.items():
+            if doctor_data.get("clinic_name") == clinic_name and doctor_data.get("state") == clinic_state:
                 self.add_doctor_box(doctor_id, doctor_data)
 
     def add_doctor_box(self, doctor_id, doctor_data):
@@ -215,16 +234,19 @@ class DoctorListPage(tk.Frame):
                 background=[('active', '#5cb85c')],
                 relief=[('pressed', 'sunken'), ('!pressed', 'raised')])
 
-        style.configure('PatientRequest.TButton', background='#9AB892')
-        style.map('PatientRequest.TButton',
+        style.configure('unactive.TButton', background='#9AB892')
+        style.map('unactive.TButton',
                 foreground=[('active', 'white')],
                 background=[('active', '#82a383')],  # Slightly darker green for active state
                 relief=[('pressed', 'sunken'), ('!pressed', 'raised')])
 
+        btn_logout = ttk.Button(header_frame, text="Logout", style='unactive.TButton')
+        btn_logout.pack(side=tk.RIGHT, padx=10, pady=10)
+
         btn_doctor_list = ttk.Button(header_frame, text="Doctor List", style='TButton')
         btn_doctor_list.pack(side=tk.RIGHT, padx=10, pady=10)
 
-        btn_patient_request = ttk.Button(header_frame, text="Patient Request", style='PatientRequest.TButton')
+        btn_patient_request = ttk.Button(header_frame, text="Patient Request", style='unactive.TButton')
         btn_patient_request.pack(side=tk.RIGHT, padx=10, pady=10)
 
         # Add Back button to the top right corner of header

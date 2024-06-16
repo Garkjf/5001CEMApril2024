@@ -75,8 +75,8 @@ def create_ui(root, logo_path, admin_id):
               relief=[('pressed', 'sunken'), ('!pressed', 'raised')])   
 
     # Create a specific style for the "Patient Request" button
-    style.configure('PatientRequest.TButton', background='#9AB892')
-    style.map('PatientRequest.TButton',
+    style.configure('unactive.TButton', background='#9AB892')
+    style.map('unactive.TButton',
               foreground=[('active', 'white')],
               background=[('active', '#82a383')],  # Slightly darker green for active state
               relief=[('pressed', 'sunken'), ('!pressed', 'raised')])
@@ -88,10 +88,15 @@ def create_ui(root, logo_path, admin_id):
     def open_patient_request():
         subprocess.Popen(['python', os.path.join(dir, 'patient_request.py')])
 
+    def start_login():
+        subprocess.Popen(["python", os.path.join(dir, 'Login.py')])
+
     # Add buttons to the header with switched positions
+    btn_logout = ttk.Button(header_frame, text="Logout", style='unactive.TButton', command=start_login)
+    btn_logout.pack(side=tk.RIGHT, padx=10, pady=10)
     btn_doctor_list = ttk.Button(header_frame, text="Doctor List", style='TButton', command=open_doctor_list)
     btn_doctor_list.pack(side=tk.RIGHT, padx=10, pady=10)
-    btn_patient_request = ttk.Button(header_frame, text="Patient Request", style='PatientRequest.TButton', command=open_patient_request)
+    btn_patient_request = ttk.Button(header_frame, text="Patient Request", style='unactive.TButton', command=open_patient_request)
     btn_patient_request.pack(side=tk.RIGHT, padx=10, pady=10)
 
     # Create a frame for the main content
@@ -263,7 +268,7 @@ if __name__ == "__main__":
     root = tk.Tk()
     logo_path = logoImageFile
     # Set the same geometry as the login page
-    root.geometry("750x600")
+    root.geometry("990x550")
     create_ui(root, logo_path, admin_id)
 
     root.mainloop()
