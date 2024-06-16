@@ -205,7 +205,7 @@ class DoctorListPage(tk.Frame):
             remove_button.pack(side=tk.RIGHT, padx=10)
 
     def view_details(self, doctor_id):
-        doctor_data = self.doctors[doctor_id]
+        doctor_data = db.reference('doctors/'+ doctor_id).get()
 
         self.clear_content()
 
@@ -251,7 +251,7 @@ class DoctorListPage(tk.Frame):
 
         # Add Back button to the top right corner of header
         back_button_image = tk.PhotoImage(file= backIconImage)  # Replace with your image file path
-        back_button_image = back_button_image.resize((30, 15))  # Resize the image as needed
+        back_button_image = back_button_image.subsample(20,20)  # Resize the image as needed
 
         back_button = tk.Button(header_frame, image=back_button_image, command=self.back_to_list, bd=0)
         back_button.image = back_button_image
@@ -313,9 +313,9 @@ class DoctorListPage(tk.Frame):
             for appointment_id, appointment_data in appointments_ref.items():
                 appointment_info = (
                     f"Appointment ID: {appointment_id}\n"
-                    f"Patient Name: {appointment_data.get('patient_name')}\n"
-                    f"Date: {appointment_data.get('date')}\n"
-                    f"Time: {appointment_data.get('time')}\n"
+                    f"Patient Name: {appointment_data.get('username')}\n"
+                    f"Date: {appointment_data.get('appointment_date')}\n"
+                    f"Time: {appointment_data.get('appointment_time')}\n"
                     f"Status: {appointment_data.get('status')}\n"
                 )
                 appointment_label = tk.Label(scrollable_frame, text=appointment_info, anchor="w", justify=tk.LEFT, bg="white", width=132, height=6,
