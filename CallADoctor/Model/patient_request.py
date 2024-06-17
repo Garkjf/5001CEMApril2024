@@ -1,27 +1,39 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from PIL import Image, ImageTk
 import firebase_admin
 from firebase_admin import credentials, initialize_app, db
 import os
 import subprocess
+import sys
 
 # Set up paths
 dir = os.path.dirname(__file__)
 serviceAccountKeyFile = os.path.join(dir, '../calladoctor-serviceAccountKey.json')
+logoImageFile = os.path.join(dir, '../Images/CallADoctor-logo.png')  # Change the path to your own logo image
+backIconImage = os.path.join(dir, '../Images/back-icon.png') # Change the path to your own logo image
 
 # Initialize Firebase
 cred = credentials.Certificate(serviceAccountKeyFile)
 initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
 
-def fetch_appointments():
+def fetch_appointments(clinic_name, clinic_state):
     # Fetch appointments from Firebase database
     ref = db.reference('appointment')
     appointments = ref.get()
     
-    # Filter out appointments that are already Accepted or Rejected
-    filtered_appointments = {key: value for key, value in appointments.items() if value.get('status') not in ['Accepted', 'Rejected']}
-    
+    filtered_appointments = {}
+
+    for appt_id, appt_info in appointments.items():
+        appt_clinic_name = appt_info.get('clinic_name')
+        appt_clinic_state = appt_info.get('clinic_state')
+        appt_status = appt_info.get('status')
+
+        print(appt_clinic_name, appt_clinic_state, appt_status)
+
+        if appt_clinic_name == clinic_name and appt_clinic_state == clinic_state and appt_status == 'Pending':
+            # Filter out appointments that are already Accepted or Rejected
+            filtered_appointments[appt_id] = appt_info
+
     return filtered_appointments
 
 def update_appointment_status(appt_id, status):
@@ -37,22 +49,21 @@ def open_doctor_schedule(doctor_id):
     # Replace this with your logic to open the doctor's schedule
     print(f"Viewing schedule for doctor with ID: {doctor_id}")
 
-def create_ui(root, logo_path):
+def create_ui(root, logo_path, admin_id):
     # Set the window title
     root.title("Admin Page")
 
     # Load the logo image
-    logo_image = Image.open(logo_path)
-    logo_image = logo_image.resize((100, 60))  # Resize if needed
-    logo_photo = ImageTk.PhotoImage(logo_image)
+    logo_image = tk.PhotoImage(file=logo_path)
+    logo_image = logo_image.subsample(2,2)  # Resize if needed
 
     # Create a frame for the header
     header_frame = tk.Frame(root, bg='#f7f7eb')
     header_frame.pack(fill=tk.X)
 
     # Add the logo to the header
-    logo_label = tk.Label(header_frame, image=logo_photo, bg='#f7f7eb')
-    logo_label.image = logo_photo  # Keep a reference to avoid garbage collection
+    logo_label = tk.Label(header_frame, image=logo_image, bg='#f7f7eb')
+    logo_label.image = logo_image  # Keep a reference to avoid garbage collection
     logo_label.pack(side=tk.LEFT, padx=10, pady=10)
 
     # Create a style for the buttons
@@ -64,23 +75,28 @@ def create_ui(root, logo_path):
               relief=[('pressed', 'sunken'), ('!pressed', 'raised')])   
 
     # Create a specific style for the "Patient Request" button
-    style.configure('PatientRequest.TButton', background='#9AB892')
-    style.map('PatientRequest.TButton',
+    style.configure('unactive.TButton', background='#9AB892')
+    style.map('unactive.TButton',
               foreground=[('active', 'white')],
               background=[('active', '#82a383')],  # Slightly darker green for active state
               relief=[('pressed', 'sunken'), ('!pressed', 'raised')])
 
     # Open the doctor_list.py script using subprocess
     def open_doctor_list():
-        subprocess.Popen(['python', 'C:/Users/mwk02/OneDrive/Desktop/5001CEMApril2024-main/CallADoctor/Model/doctor_list.py'])
+        subprocess.Popen(['python', os.path.join(dir, 'doctor_list.py')])
 
     def open_patient_request():
-        subprocess.Popen(['python', 'C:/Users/mwk02/OneDrive/Desktop/5001CEMApril2024-main/CallADoctor/Model/patient_request.py'])
+        subprocess.Popen(['python', os.path.join(dir, 'patient_request.py')])
+
+    def start_login():
+        subprocess.Popen(["python", os.path.join(dir, 'Login.py')])
 
     # Add buttons to the header with switched positions
+    btn_logout = ttk.Button(header_frame, text="Logout", style='unactive.TButton', command=start_login)
+    btn_logout.pack(side=tk.RIGHT, padx=10, pady=10)
     btn_doctor_list = ttk.Button(header_frame, text="Doctor List", style='TButton', command=open_doctor_list)
     btn_doctor_list.pack(side=tk.RIGHT, padx=10, pady=10)
-    btn_patient_request = ttk.Button(header_frame, text="Patient Request", style='PatientRequest.TButton', command=open_patient_request)
+    btn_patient_request = ttk.Button(header_frame, text="Patient Request", style='unactive.TButton', command=open_patient_request)
     btn_patient_request.pack(side=tk.RIGHT, padx=10, pady=10)
 
     # Create a frame for the main content
@@ -105,19 +121,30 @@ def create_ui(root, logo_path):
     # Attach the frame to the canvas
     canvas.create_window((0, 0), window=appointments_frame, anchor=tk.NW)
 
-    # Add the title label to the content frame
-    title_label = tk.Label(appointments_frame, text="Pantai Hospital Penang Patient’s Request",
-                           font=("Arial", 18, "bold"), bg='#f7f7eb')
-    title_label.pack(padx=20, pady=20, anchor=tk.W)
+    print(admin_id)
+    clinic_ref = db.reference('clinicAdmins/' + admin_id)
+    clinic_name = clinic_ref.get()['clinic_name']
+    clinic_state = clinic_ref.get()['clinic_state']
 
     # Fetch appointments from Firebase
-    appointments = fetch_appointments()
+    appointments = fetch_appointments(clinic_name, clinic_state)
+    # Add the title label to the content frame
+    title_label = tk.Label(appointments_frame, text=clinic_name + " " + clinic_state + " " + "Patient’s Request",
+                           font=("Arial", 18, "bold"), bg='#f7f7eb')
+    title_label.pack(padx=20, pady=20, anchor=tk.W)
 
     if appointments:
         # Display appointment details
         for appt_id, appt in appointments.items():
             frame = ttk.Frame(appointments_frame, padding="10", style="Card.TFrame")
             frame.pack(fill="x", pady=5, padx=10)
+            doctor_ref = db.reference('doctors')
+            doctor_data = doctor_ref.get()
+
+            doctor_name = doctor_data.get('name')
+            if doctor_name == appt.get('doctor_name'):
+                doctor_id = doctor_data[appt.get('doctor_id')]
+                admin_id = doctor_id
 
             brief_label_text = (
                 f"Requested at: {appt.get('created_at')}\n"
@@ -133,7 +160,7 @@ def create_ui(root, logo_path):
             buttons_frame = ttk.Frame(frame)
             buttons_frame.pack(pady=5)
 
-            view_button = ttk.Button(buttons_frame, text="View", command=lambda a=appt: view_appointment_details(root, a, logo_path, appt_id))
+            view_button = ttk.Button(buttons_frame, text="View", command=lambda a=appt: view_appointment_details(root, a, logo_path, appt_id, admin_id))
             view_button.pack(side=tk.LEFT, padx=5)
 
             accept_button = ttk.Button(buttons_frame, text="Approve", command=lambda appt_id=appt_id: update_appointment_status(appt_id, "Accepted"))
@@ -146,7 +173,7 @@ def create_ui(root, logo_path):
     appointments_frame.update_idletasks()
     canvas.config(scrollregion=canvas.bbox("all"))
 
-def view_appointment_details(root, appt, logo_path, appt_id):
+def view_appointment_details(root, appt, logo_path, appt_id, doctor_id):
     # Clear the current content
     for widget in root.winfo_children():
         widget.destroy()
@@ -160,26 +187,24 @@ def view_appointment_details(root, appt, logo_path, appt_id):
     header_frame.pack(fill=tk.X)
 
     # Load the logo image
-    logo_image = Image.open(logo_path)
-    logo_image = logo_image.resize((100, 60))  # Resize if needed
-    logo_photo = ImageTk.PhotoImage(logo_image)
+    logo_image = tk.PhotoImage(file=logo_path)
+    logo_image = logo_image.subsample(2,2)  # Resize if needed
 
     # Add the logo to the header
-    logo_label = tk.Label(header_frame, image=logo_photo, bg='#f7f7eb')
-    logo_label.image = logo_photo  # Keep a reference to avoid garbage collection
+    logo_label = tk.Label(header_frame, image=logo_image, bg='#f7f7eb')
+    logo_label.image = logo_image  # Keep a reference to avoid garbage collection
     logo_label.pack(side=tk.LEFT, padx=10, pady=10)
 
     # Add Back button to the top right corner of header
-    back_button_image = Image.open("C:/Users/mwk02/OneDrive/Desktop/5001CEMApril2024-main/CallADoctor/Images/back-icon.png")  # Replace with your image file path
-    back_button_image = back_button_image.resize((30, 15))  # Resize the image as needed
-    back_photo = ImageTk.PhotoImage(back_button_image)
+    back_button_image = tk.PhotoImage(file=backIconImage)  # Replace with your image file path
+    back_button_image = back_button_image.subsample(20, 20) # Resize the image as needed
 
-    def back_to_main_ui():
+    def back_to_main_ui(admin_id):
         detail_frame.destroy()
-        create_ui(root, logo_path)
+        create_ui(root, logo_path, admin_id)
 
-    back_button = tk.Button(header_frame, image=back_photo, command=back_to_main_ui, bd=0)
-    back_button.image = back_photo
+    back_button = tk.Button(header_frame, image=back_button_image, command=lambda : back_to_main_ui(admin_id), bd=0)
+    back_button.image = back_button_image
     back_button.pack(side=tk.RIGHT, padx=10, pady=10)
 
     # Add title for appointment information
@@ -212,8 +237,6 @@ def view_appointment_details(root, appt, logo_path, appt_id):
 
     # Add "View Doctor Schedule" button to view the doctor's schedule
     def view_doctor_schedule():
-        # Replace with logic to fetch doctor ID and open schedule
-        doctor_id = appt.get('doctor_id')  # Assuming doctor_id is stored in appointment data
         open_doctor_schedule(doctor_id)
 
     view_schedule_button = ttk.Button(detail_frame, text="View Doctor Schedule", command=view_doctor_schedule)
@@ -234,17 +257,19 @@ def view_appointment_details(root, appt, logo_path, appt_id):
     detail_frame.grid_rowconfigure(1, weight=1)
 
 def refresh_ui():
+    admin_id = sys.argv[1]
     # Clear current UI and recreate with updated data
     for widget in root.winfo_children():
         widget.destroy()
-    create_ui(root, logo_path)
+    create_ui(root, logo_path, admin_id)
 
 if __name__ == "__main__":
+    admin_id = sys.argv[1]
     root = tk.Tk()
-    logo_path = "C:/Users/mwk02/OneDrive/Desktop/5001CEMApril2024-main/CallADoctor/Images/CallADoctor-logo-small.png"
+    logo_path = logoImageFile
     # Set the same geometry as the login page
-    root.geometry("750x600")
-    create_ui(root, logo_path)
+    root.geometry("990x550")
+    create_ui(root, logo_path, admin_id)
 
     root.mainloop()
 

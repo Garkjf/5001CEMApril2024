@@ -3,24 +3,37 @@ from tkinter import ttk, messagebox
 import os
 import firebase_admin
 from firebase_admin import credentials, initialize_app, db
-from PIL import Image, ImageTk
 import subprocess
+import sys
 
 # Set up paths
 dir = os.path.dirname(__file__)
 serviceAccountKeyFile = os.path.join(dir, '../calladoctor-serviceAccountKey.json')
+logoImageFile = os.path.join(dir, '../Images/CallADoctor-logo.png')  # Change the path to your own logo image
+backIconImage = os.path.join(dir, '../Images/back-icon.png') # Change the path to your own logo image
 
 # Initialize Firebase
 cred = credentials.Certificate(serviceAccountKeyFile)
 initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
 
 class DoctorListPage(tk.Frame):
-    def __init__(self, parent, logo_path):
+    def __init__(self, parent, logo_path, admin_id):
         super().__init__(parent, bg="#9AB892")
+        self.admin_id = admin_id
         self.parent = parent
         self.logo_path = logo_path
-        self.specialties = ["All", "Cardiology", "Dermatology", "Endocrinology", "Gastroenterology",
-                            "Neurology", "Oncology", "Pediatrics", "Psychiatry", "Radiology", "Urology"]
+
+        self.doctors = db.reference('doctors').get()
+        self.clinic = db.reference('clinicAdmins/' + admin_id).get()
+        clinic_name = self.clinic.get("clinic_name")
+        clinic_state = self.clinic.get("state")
+        specialties = []
+
+        for doctor_id, doctor_data in self.doctors.items():
+            if doctor_data.get("clinic_name") == clinic_name and doctor_data.get("state") == clinic_state:
+                specialties.extend([doctor_data.get("specialist")])
+
+        self.specialties = ["All"] + specialties
         self.selected_specialty = tk.StringVar(value="All")
         self.create_widgets()
         self.load_doctors()
@@ -31,13 +44,12 @@ class DoctorListPage(tk.Frame):
         header_frame.pack(fill=tk.X)
 
         # Load the logo image
-        logo_image = Image.open(self.logo_path)
-        logo_image = logo_image.resize((100, 60))  # Resize if needed
-        self.logo_photo = ImageTk.PhotoImage(logo_image)
+        logo_image = tk.PhotoImage(file=self.logo_path)
+        logo_image = logo_image.subsample(2,2)  # Resize if needed
 
         # Add the logo to the header
-        logo_label = tk.Label(header_frame, image=self.logo_photo, bg='#f7f7eb')
-        logo_label.image = self.logo_photo  # Keep a reference to avoid garbage collection
+        logo_label = tk.Label(header_frame, image=logo_image, bg='#f7f7eb')
+        logo_label.image = logo_image  # Keep a reference to avoid garbage collection
         logo_label.pack(side=tk.LEFT, padx=10, pady=10)
 
         # Add buttons to the header
@@ -53,18 +65,23 @@ class DoctorListPage(tk.Frame):
                 foreground=[('active', 'white')],
                 background=[('active', 'white')],  # Slightly darker green for active state
                 relief=[('pressed', 'sunken'), ('!pressed', 'raised')])
-        
+       
         # Open the doctor_list.py script using subprocess
-        def open_doctor_list():
-            subprocess.Popen(['python', 'C:/Users/mwk02/OneDrive/Desktop/5001CEMApril2024-main/CallADoctor/Model/doctor_list.py'])
+        def open_doctor_list(admin_id):
+            subprocess.Popen(['python', os.path.join(dir, 'doctor_list.py')] + [admin_id])
 
-        def open_patient_request():
-            subprocess.Popen(['python', 'C:/Users/mwk02/OneDrive/Desktop/5001CEMApril2024-main/CallADoctor/Model/patient_request.py'])
+        def open_patient_request(admin_id):
+            subprocess.Popen(['python', os.path.join(dir, 'patient_request.py')] + [admin_id])
+
+        def start_login():
+            subprocess.Popen(["python", os.path.join(dir, 'Login.py')])
 
         # Add buttons to the header with switched positions
-        btn_doctor_list = ttk.Button(header_frame, text="Doctor List", style='TButton', command=open_doctor_list)
+        btn_logout = ttk.Button(header_frame, text="Logout", style='unactive.TButton', command=start_login)
+        btn_logout.pack(side=tk.RIGHT, padx=10, pady=10)
+        btn_doctor_list = ttk.Button(header_frame, text="Doctor List", style='TButton', command=lambda: open_doctor_list(self.admin_id))
         btn_doctor_list.pack(side=tk.RIGHT, padx=10, pady=10)
-        btn_patient_request = ttk.Button(header_frame, text="Patient Request", style='TButton', command=open_patient_request)
+        btn_patient_request = ttk.Button(header_frame, text="Patient Request", style='TButton', command=lambda :open_patient_request(self.admin_id))
         btn_patient_request.pack(side=tk.RIGHT, padx=10, pady=10)
 
         # Create a frame for the main content
@@ -148,8 +165,12 @@ class DoctorListPage(tk.Frame):
         
         # Fetch doctor data from Firebase
         self.doctors = db.reference('doctors').get()
-        if self.doctors:
-            for doctor_id, doctor_data in self.doctors.items():
+        self.clinic = db.reference('clinicAdmins/' + admin_id).get()
+        clinic_name = self.clinic.get("clinic_name")
+        clinic_state = self.clinic.get("state")
+
+        for doctor_id, doctor_data in self.doctors.items():
+            if doctor_data.get("clinic_name") == clinic_name and doctor_data.get("state") == clinic_state:
                 self.add_doctor_box(doctor_id, doctor_data)
 
     def add_doctor_box(self, doctor_id, doctor_data):
@@ -184,7 +205,7 @@ class DoctorListPage(tk.Frame):
             remove_button.pack(side=tk.RIGHT, padx=10)
 
     def view_details(self, doctor_id):
-        doctor_data = self.doctors[doctor_id]
+        doctor_data = db.reference('doctors/'+ doctor_id).get()
 
         self.clear_content()
 
@@ -197,13 +218,12 @@ class DoctorListPage(tk.Frame):
         header_frame.pack(fill=tk.X)
 
         # Load the logo image (assuming self.logo_path is already defined)
-        logo_image = Image.open(self.logo_path)
-        logo_image = logo_image.resize((100, 60))  # Resize if needed
-        self.logo_photo = ImageTk.PhotoImage(logo_image)
+        logo_image = tk.PhotoImage(self.logo_path)
+        logo_image = logo_image.subsample(20, 20)  # Resize if needed
 
         # Add the logo to the header
-        logo_label = tk.Label(header_frame, image=self.logo_photo, bg='#f7f7eb')
-        logo_label.image = self.logo_photo  # Keep a reference to avoid garbage collection
+        logo_label = tk.Label(header_frame, image=logo_image, bg='#f7f7eb')
+        logo_label.image = logo_image  # Keep a reference to avoid garbage collection
         logo_label.pack(side=tk.LEFT, padx=10, pady=10)
 
         # Add buttons to the header
@@ -214,25 +234,27 @@ class DoctorListPage(tk.Frame):
                 background=[('active', '#5cb85c')],
                 relief=[('pressed', 'sunken'), ('!pressed', 'raised')])
 
-        style.configure('PatientRequest.TButton', background='#9AB892')
-        style.map('PatientRequest.TButton',
+        style.configure('unactive.TButton', background='#9AB892')
+        style.map('unactive.TButton',
                 foreground=[('active', 'white')],
                 background=[('active', '#82a383')],  # Slightly darker green for active state
                 relief=[('pressed', 'sunken'), ('!pressed', 'raised')])
 
+        btn_logout = ttk.Button(header_frame, text="Logout", style='unactive.TButton')
+        btn_logout.pack(side=tk.RIGHT, padx=10, pady=10)
+
         btn_doctor_list = ttk.Button(header_frame, text="Doctor List", style='TButton')
         btn_doctor_list.pack(side=tk.RIGHT, padx=10, pady=10)
 
-        btn_patient_request = ttk.Button(header_frame, text="Patient Request", style='PatientRequest.TButton')
+        btn_patient_request = ttk.Button(header_frame, text="Patient Request", style='unactive.TButton')
         btn_patient_request.pack(side=tk.RIGHT, padx=10, pady=10)
 
         # Add Back button to the top right corner of header
-        back_button_image = Image.open("C:/Users/mwk02/OneDrive/Desktop/5001CEMApril2024-main/CallADoctor/Images/back-icon.png")  # Replace with your image file path
-        back_button_image = back_button_image.resize((30, 15))  # Resize the image as needed
-        back_photo = ImageTk.PhotoImage(back_button_image)
+        back_button_image = tk.PhotoImage(file= backIconImage)  # Replace with your image file path
+        back_button_image = back_button_image.subsample(20,20)  # Resize the image as needed
 
-        back_button = tk.Button(header_frame, image=back_photo, command=self.back_to_list, bd=0)
-        back_button.image = back_photo
+        back_button = tk.Button(header_frame, image=back_button_image, command=self.back_to_list, bd=0)
+        back_button.image = back_button_image
         back_button.pack(side=tk.RIGHT, padx=10, pady=10)
 
         # Create a scrollable frame for detailed content
@@ -291,9 +313,9 @@ class DoctorListPage(tk.Frame):
             for appointment_id, appointment_data in appointments_ref.items():
                 appointment_info = (
                     f"Appointment ID: {appointment_id}\n"
-                    f"Patient Name: {appointment_data.get('patient_name')}\n"
-                    f"Date: {appointment_data.get('date')}\n"
-                    f"Time: {appointment_data.get('time')}\n"
+                    f"Patient Name: {appointment_data.get('username')}\n"
+                    f"Date: {appointment_data.get('appointment_date')}\n"
+                    f"Time: {appointment_data.get('appointment_time')}\n"
                     f"Status: {appointment_data.get('status')}\n"
                 )
                 appointment_label = tk.Label(scrollable_frame, text=appointment_info, anchor="w", justify=tk.LEFT, bg="white", width=132, height=6,
@@ -338,13 +360,15 @@ class DoctorListPage(tk.Frame):
         self.load_doctors()
 
 if __name__ == "__main__":
+    admin_id = sys.argv[1]
+
     root = tk.Tk()
     root.title("Admin Page")
     root.geometry("990x550")
-    logo_path = "C:/Users/mwk02/OneDrive/Desktop/5001CEMApril2024-main/CallADoctor/Images/CallADoctor-logo-small.png"
+    logo_path = logoImageFile
     
     # Create the DoctorListPage instance
-    DoctorListPage(root, logo_path)
+    DoctorListPage(root, logo_path, admin_id)
     
     root.mainloop()
     
