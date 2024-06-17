@@ -6,6 +6,8 @@ from tkinter.font import BOLD, Font
 import os
 from firebase_admin import credentials, initialize_app, db
 import subprocess
+from datetime import datetime
+import pytz
 
 dir = os.path.dirname(__file__)
 
@@ -162,32 +164,36 @@ class DoctorPage(tk.Frame):
         
         prescriptions = dict(filter(lambda entry: str(entry[1].get('patientID')) == patient_id, 
                                     self.prescriptions.items()))
-        self.generatePrescriptionTable(prescriptions)
+        self.generatePrescriptionTable(prescriptions, patient_id)
     
     # Create prescriptions table
-    def generatePrescriptionTable(self, prescriptions):
+    def generatePrescriptionTable(self, prescriptions, patient_id):
         prescription_table = tk.Frame(self)
         prescription_table.grid(row=2, column=0, pady=20, sticky="w")
 
-        columnNames = ["Doctor Name", "Specialist", "Action"]
+        columnNames = ["Doctor Name", "Specialist", "Created At", "Action"]
         for column, name in enumerate(columnNames):
             e = tk.Label(prescription_table, highlightbackground="black", highlightthickness=1,
                          padx=20, borderwidth=2, text=name, font=("Arial", 12, BOLD))
             e.grid(row=0, column=column)
         
         for row, (prescription_id, prescription) in enumerate(prescriptions.items(), 1):
-            doctor = self.doctors.get(prescription.get('doctorID'))
-            e = tk.Label(prescription_table, padx=20, text=doctor.get('username'))
-            e.grid(row=row, column=0)
+            if patient_id == str(prescription.get('patientID')):
+                doctor = self.doctors.get(prescription.get('doctorID'))
+                e = tk.Label(prescription_table, padx=20, text=doctor.get('username'))
+                e.grid(row=row, column=0)
 
-            e = tk.Label(prescription_table, padx=20, text=doctor.get('specialist'))
-            e.grid(row=row, column=1)
+                e = tk.Label(prescription_table, padx=20, text=doctor.get('specialist'))
+                e.grid(row=row, column=1)
 
-            view_button = tk.Button(prescription_table, padx=20, pady=5, text="View", 
-                                    bg="#0275DD", fg="#ffffff",
-                                    command=self.handleViewPrescription(prescription_id))
-            view_button.grid(row=row, column=2)
-    
+                e = tk.Label(prescription_table, padx=20, text=prescription.get('created_at'))
+                e.grid(row=row, column=2)
+
+                view_button = tk.Button(prescription_table, padx=20, pady=5, text="View", 
+                                        bg="#0275DD", fg="#ffffff",
+                                        command=self.handleViewPrescription(prescription_id))
+                view_button.grid(row=row, column=3)
+        
     # Prescription info page
     def handleViewPrescription(self, prescription_id):
         return lambda: self.showPrescriptionInfoPage(prescription_id)
@@ -203,7 +209,7 @@ class DoctorPage(tk.Frame):
         top_frame = tk.Frame(self, bg="#9AB892")
         top_frame.grid(column=0, row=0, sticky="w")
 
-        self.placeBackButton(top_frame, self.handleViewPatient(patient_id))
+        self.placeBackButton(top_frame, self.handleViewPatient(patient_id, self.showAssignedRequestPage))
 
         main_frame = tk.Frame(self, bg="#ffffff", padx=10, pady=10)
         main_frame.grid(row=1, column=0, pady=10)
@@ -264,7 +270,7 @@ class DoctorPage(tk.Frame):
         top_frame = tk.Frame(self, bg="#9AB892")
         top_frame.grid(column=0, row=0, sticky="w")
 
-        self.placeBackButton(top_frame, self.handleViewPatient(patient_id))
+        self.placeBackButton(top_frame, self.handleViewPatient(patient_id, self.showAssignedRequestPage))
         
         patient = self.patients.get(patient_id)
 
@@ -306,30 +312,32 @@ class DoctorPage(tk.Frame):
         self.diagnosis_entry = tk.Entry(main_frame)
         self.diagnosis_entry.grid(row=3, column=1, pady=10, sticky="w")
 
-        tk.Label(main_frame, text="Treatment", bg="#ffffff").grid(row=3, column=0, 
+        tk.Label(main_frame, text="Treatment", bg="#ffffff").grid(row=4, column=0, 
                                                                  padx=10, sticky="w")
         self.treatment_entry = tk.Entry(main_frame)
-        self.treatment_entry.grid(row=3, column=1, pady=10, sticky="w")
+        self.treatment_entry.grid(row=4, column=1, pady=10, sticky="w")
 
-        tk.Label(main_frame, text="Doctor's Remark", bg="#ffffff").grid(row=4, column=0, 
+        tk.Label(main_frame, text="Doctor's Remark", bg="#ffffff").grid(row=5, column=0, 
                                                                  padx=10, sticky="w")
         self.remark_entry = tk.Text(main_frame, height=5, width=50)
-        self.remark_entry.grid(row=5, column=0, pady=10, columnspan=2, sticky="w")
+        self.remark_entry.grid(row=6, column=0, pady=10, columnspan=2, sticky="w")
 
-        submit_button = tk.Button(main_frame, padx=20, pady=5, text="View", 
+        submit_button = tk.Button(main_frame, padx=20, pady=5, text="Submit", 
                                     bg="#0275DD", fg="#ffffff", 
                                     command = lambda: self.addPrescription(patient_id))
-        submit_button.grid(row=6, column=0, pady=10, sticky="w")
+        submit_button.grid(row=7, column=0, pady=10, sticky="w")
 
     # Add new prescription function
     def addPrescription(self, patient_id):
+        current_datetime = datetime.now(pytz.timezone('Asia/Kuala_Lumpur')).strftime("%Y-%m-%d %H:%M:%S")
         newPrescription = {
-            "diagnosis": self.diagnosis_entry.get(),
-            "treatment": self.treatment_entry.get(),
-            "remark": self.remark_entry.get(),
-            "symptoms": self.diagnosis_entry.get(),
+            "diagnosis": self.diagnosis_entry.get('1.0', 'end'),
+            "treatment": self.treatment_entry.get('1.0', 'end'),
+            "remark": self.remark_entry.get('1.0', 'end'),
+            "symptoms": self.diagnosis_entry.get('1.0', 'end'),
             "patientID": patient_id,
-            "doctorID": doctor_id
+            "doctorID": doctor_id,
+            "created_at": current_datetime
         }
         db.reference('prescriptions').push(newPrescription)
         messagebox.showinfo("Success", "Created new prescription!")

@@ -784,7 +784,7 @@ class PatientPage(tk.Frame):
 
         for prescription, prescription_data in prescriptions.items():
             if prescription_data.get('patientID') == patient_id:
-                prescrip_date = prescription_data.get('date')
+                prescrip_date = prescription_data.get('created_at')
                 doctor_id = prescription_data.get('doctorID')
                 doctor_ref = db.reference('doctors/' + doctor_id)
                 doctor_data = doctor_ref.get()
