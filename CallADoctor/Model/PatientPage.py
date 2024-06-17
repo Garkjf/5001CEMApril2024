@@ -852,7 +852,7 @@ class PatientPage(tk.Frame):
 
 
         def update_status(self,appointmentNo):
-            appointment_ref = db.reference('appointments/' + appointmentNo)
+            appointment_ref = db.reference('appointment/' + appointmentNo)
             appointment_data = appointment_ref.get()
             if appointment_data:
                 status = appointment_data.get('status')

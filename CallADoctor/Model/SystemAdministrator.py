@@ -45,7 +45,7 @@ class SystemAdministrator:
         clinic_state_options = ["All"]
         clinic_states = set()
     
-        for clinic_id, clinic_data in clinics.items():
+        for status, clinic_data in clinics.items():
             clinic_state = clinic_data.get('clinic_state')
             if clinic_state not in clinic_states:
                 clinic_state_options.append(clinic_state)
