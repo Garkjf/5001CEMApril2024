@@ -22,49 +22,21 @@ class PatientRequest(tk.Frame):
         self.parent = parent
         self.logo_path = logo_path
         self.admin_id = admin_id
-        self.create_ui(parent, logo_path, admin_id)
+        self.create_widgets()
 
-    def fetch_appointments(self, clinic_name, clinic_state):
-        # Fetch appointments from Firebase database
-        ref = db.reference('appointment')
-        appointments = ref.get()
-
-        filtered_appointments = {}
-
-        for appt_id, appt_info in appointments.items():
-            appt_clinic_name = appt_info.get('clinic_name')
-            appt_clinic_state = appt_info.get('clinic_state')
-            appt_status = appt_info.get('status')
-
-            if appt_clinic_name == clinic_name and appt_clinic_state == clinic_state and appt_status == 'Pending':
-                # Filter out appointments that are already Accepted or Rejected
-                filtered_appointments[appt_id] = appt_info
-
-        return filtered_appointments
-
-    def update_appointment_status(self, appt_id, status):
-        # Update the appointment status in Firebase database
-        ref = db.reference(f'appointment/{appt_id}')
-        ref.update({'status': status})
-        messagebox.showinfo("Info", f"Appointment {status} successfully!")
-        
-        # Refresh UI after updating status
-        self.refresh_ui()
-
-    def open_doctor_schedule(self, doctor_id):
-        # Replace this with your logic to open the doctor's schedule
-        print(f"Viewing schedule for doctor with ID: {doctor_id}")
-
-    def create_ui(self, root, logo_path, admin_id):
-        # Set the window title
-        root.title("Admin Page")
+    def create_widgets(self):
+        self.parent.title("Patient Request Page")
 
         # Load the logo image
-        logo_image = tk.PhotoImage(file=logo_path)
-        logo_image = logo_image.subsample(2, 2)  # Resize if needed
+        logo_image = tk.PhotoImage(file=self.logo_path)
+        logo_image = logo_image.subsample(2, 2)
+
+        # Load the back icon image and resize
+        self.back_icon_image = tk.PhotoImage(file=backIconImage)
+        self.back_icon_image = self.back_icon_image.subsample(30, 30)  # Resizing the image by subsampling
 
         # Create a frame for the header
-        header_frame = tk.Frame(root, bg='#f7f7eb')
+        header_frame = tk.Frame(self.parent, bg='#f7f7eb')
         header_frame.pack(fill=tk.X)
 
         # Add the logo to the header
@@ -78,32 +50,31 @@ class PatientRequest(tk.Frame):
         style.map('TButton',
                   foreground=[('active', 'white')],
                   background=[('active', '#5cb85c')],
-                  relief=[('pressed', 'sunken'), ('!pressed', 'raised')])   
+                  relief=[('pressed', 'sunken'), ('!pressed', 'raised')])
 
-        # Create a specific style for the "Patient Request" button
         style.configure('unactive.TButton', background='#9AB892')
         style.map('unactive.TButton',
                   foreground=[('active', 'white')],
-                  background=[('active', '#82a383')],  # Slightly darker green for active state
+                  background=[('active', '#82a383')],
                   relief=[('pressed', 'sunken'), ('!pressed', 'raised')])
 
-        # Open the doctor_list.py script using subprocess
         def open_doctor_list():
-            for widget in root.winfo_children():
+            self.refresh_appointments()  # Refresh appointments when returning from Doctor List page
+            for widget in self.parent.winfo_children():
                 widget.destroy()
-            DoctorListPage(root, logo_path, admin_id)
+            DoctorListPage(self.parent, self.logo_path, self.admin_id)
 
         def open_patient_request():
-            for widget in root.winfo_children():
+            self.refresh_appointments()  # Refresh appointments when returning to Patient Request page
+            for widget in self.parent.winfo_children():
                 widget.destroy()
-            PatientRequest(root, logo_path, admin_id)
+            PatientRequest(self.parent, self.logo_path, self.admin_id)
 
         def start_login():
             self.parent.destroy()
             subprocess.Popen(["python", os.path.join(dir, 'Login.py')])
 
-        # Add buttons to the header with switched positions
-        btn_logout = ttk.Button(header_frame, text="Logout", style='unactive.TButton', command=start_login)
+        btn_logout = ttk.Button(header_frame, text="Logout", style='TButton', command=start_login)
         btn_logout.pack(side=tk.RIGHT, padx=10, pady=10)
         btn_doctor_list = ttk.Button(header_frame, text="Doctor List", style='TButton', command=open_doctor_list)
         btn_doctor_list.pack(side=tk.RIGHT, padx=10, pady=10)
@@ -111,187 +82,160 @@ class PatientRequest(tk.Frame):
         btn_patient_request.pack(side=tk.RIGHT, padx=10, pady=10)
 
         # Create a frame for the main content
-        content_frame = tk.Frame(root, bg='#f7f7eb')
-        content_frame.pack(fill=tk.BOTH, expand=True)
+        self.main_frame = tk.Frame(self.parent, bg='#f7f7eb')
+        self.main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=1)
 
-        # Add a scrollbar
-        scrollbar = ttk.Scrollbar(content_frame, orient=tk.VERTICAL)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        # Create a frame for the patient requests
+        self.requests_frame = tk.Frame(self.main_frame, bg='#f7f7eb')
+        self.requests_frame.pack(fill=tk.X)  # Pack only horizontally, not expanding vertically
 
-        # Canvas to hold the appointment details with scrollbar attached
-        canvas = tk.Canvas(content_frame, bg='#f7f7eb', yscrollcommand=scrollbar.set)
-        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # Fetch clinic details from Firebase
+        clinic_ref = db.reference('clinicAdmins/' + self.admin_id)
 
-        # Configure the scrollbar to work with the canvas
-        scrollbar.config(command=canvas.yview)
-
-        # Frame inside the canvas to contain the appointment details
-        appointments_frame = tk.Frame(canvas, bg='#f7f7eb')
-        appointments_frame.pack(fill=tk.BOTH, expand=True)
-
-        # Attach the frame to the canvas
-        canvas.create_window((0, 0), window=appointments_frame, anchor=tk.NW)
-
-        clinic_ref = db.reference('clinicAdmins/' + admin_id)
+        # Extract clinic name and state
         clinic_name = clinic_ref.get()['clinic_name']
         clinic_state = clinic_ref.get()['clinic_state']
 
-        # Fetch appointments from Firebase
-        appointments = self.fetch_appointments(clinic_name, clinic_state)
-        # Add the title label to the content frame
-        title_label = tk.Label(appointments_frame, text=f"{clinic_name} {clinic_state} Patient’s Request",
-                               font=("Arial", 18, "bold"), bg='#f7f7eb')
-        title_label.pack(padx=20, pady=20, anchor=tk.W)
+        # Add a label for patient requests with dynamically fetched text
+        requests_label_text = f"{clinic_name} {clinic_state} Patient’s Request"
+        requests_label = tk.Label(self.requests_frame, text=requests_label_text, font=("Arial", 16, "bold"), bg='#f7f7eb')
+        requests_label.pack(pady=10, padx=20)  # Add padding to the sides to keep the text from expanding
+
+        # Create a canvas widget and associate it with a scrollbar
+        canvas = tk.Canvas(self.main_frame, bg='#f7f7eb')
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        scrollbar = tk.Scrollbar(self.main_frame, orient=tk.VERTICAL, command=canvas.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Configure the canvas to use the scrollbar
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Create a frame inside the canvas to hold the patient requests
+        self.patientrequest_frame = tk.Frame(canvas, bg='#f7f7eb')
+        self.patientrequest_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        
+        canvas.create_window((0, 0), window=self.patientrequest_frame, anchor="nw")
+
+        # Fetch appointment data from Firebase
+        self.refresh_appointments()
+
+    def refresh_appointments(self):
+        # Clear existing appointment boxes
+        for widget in self.patientrequest_frame.winfo_children():
+            widget.destroy()
+
+        # Fetch appointment data from Firebase
+        appointments_ref = db.reference('appointment')
+        appointments = appointments_ref.get()
 
         if appointments:
-            # Display appointment details
-            for appt_id, appt in appointments.items():
-                frame = ttk.Frame(appointments_frame, padding="10", style="Card.TFrame")
-                frame.pack(fill="x", pady=5, padx=10)
+            for appointment_id, appointment_info in appointments.items():
+                # Check if the appointment status is "Pending"
+                if appointment_info['status'] == 'Pending':
+                    # Create a box/frame for each appointment
+                    appointment_box = ttk.Frame(self.patientrequest_frame, borderwidth=2, relief="groove", padding=10)
+                    appointment_box.pack(fill=tk.BOTH, padx=30, pady=5)
 
-                doctor_ref = db.reference('doctors')
-                doctor_data = doctor_ref.get()
+                    # Display appointment details in the box
+                    appointment_details = (
+                        f"Created at: {appointment_info['created_at']}\n"
+                        f"Clinic Name: {appointment_info['clinic_name']}\n"
+                        f"Doctor Name: {appointment_info['doctor_name']}\n"
+                        f"Specialty: {appointment_info['specialty']}\n"
+                        f"Appointment Date and Time: {appointment_info['appointment_date']} - {appointment_info['appointment_time']}\n"
+                        f"Status: {appointment_info['status']}\n"
+                    )
 
-                doctor_name = doctor_data.get('name')
-                if doctor_name == appt.get('doctor_name'):
-                    doctor_id = doctor_data[appt.get('doctor_id')]
-                    admin_id = doctor_id
+                    appointment_label = tk.Label(appointment_box, text=appointment_details, font=("Arial", 12), bg='#f7f7eb', justify=tk.LEFT)
+                    appointment_label.pack(pady=5, padx=5, anchor="w", fill=tk.BOTH)  # Align text to the left and fill the label box
 
-                brief_label_text = (
-                    f"Requested at: {appt.get('created_at')}\n"
-                    f"\n"
-                    f"Clinic Name: {appt.get('clinic_name')}\n"
-                    f"Doctor Name: {appt.get('doctor_name')}\n"
-                    f"Appointment Date and Time: {appt.get('appointment_date')} - {appt.get('appointment_time')}"
-                )
-                brief_label = ttk.Label(frame, text=brief_label_text, style="Card.TLabel",
-                                        justify="left", padding=(50, 5))
-                brief_label.pack(fill="both")
+                    # Button to view detailed information
+                    view_button = ttk.Button(appointment_box, text="View Details", style='TButton', command=lambda app_id=appointment_id: self.view_appointment_details(app_id))
+                    view_button.pack(side=tk.LEFT, padx=5, pady=5)
 
-                buttons_frame = ttk.Frame(frame)
-                buttons_frame.pack(pady=5)
+                    # Buttons for accepting and rejecting appointment
+                    accept_button = ttk.Button(appointment_box, text="Accept", style='TButton', command=lambda app_id=appointment_id: self.accept_appointment(app_id))
+                    accept_button.pack(side=tk.LEFT, padx=5, pady=5)
+                    reject_button = ttk.Button(appointment_box, text="Reject", style='TButton', command=lambda app_id=appointment_id: self.reject_appointment(app_id))
+                    reject_button.pack(side=tk.LEFT, padx=5, pady=5)
 
-                view_button = ttk.Button(buttons_frame, text="View", command=lambda a=appt: self.view_appointment_details(root, a, logo_path, appt_id, admin_id), width=5)
-                view_button.pack(side=tk.LEFT, padx=5)
+        # Update the scroll region of the canvas
+        self.parent.update_idletasks()
+        self.patientrequest_frame.update_idletasks()
 
-                accept_button = ttk.Button(buttons_frame, text="Approve", command=lambda appt_id=appt_id: self.update_appointment_status(appt_id, "Accepted"))
-                accept_button.pack(side=tk.LEFT, padx=5)
-
-                reject_button = ttk.Button(buttons_frame, text="Reject", command=lambda appt_id=appt_id: self.update_appointment_status(appt_id, "Rejected"))
-                reject_button.pack(side=tk.LEFT, padx=5)
-
-        # Update the canvas scroll region when widgets are added
-        appointments_frame.update_idletasks()
-        canvas.config(scrollregion=canvas.bbox("all"))
-
-    def refresh_ui(self):
-        # Clear current UI and recreate with updated data
-        for widget in self.parent.winfo_children():
-            widget.destroy()
-        self.create_ui(self.parent, self.logo_path, self.admin_id)        
-
-    def view_appointment_details(self, root, appt, logo_path, appt_id, admin_id):
-        # Clear the current content
-        for widget in root.winfo_children():
+    def view_appointment_details(self, appointment_id):
+        # Clear appointment boxes
+        for widget in self.patientrequest_frame.winfo_children():
             widget.destroy()
 
-        # Create a frame for the detailed view
-        detail_frame = tk.Frame(root, bg='#f7f7eb')
-        detail_frame.pack(fill=tk.BOTH, expand=True)
+        # Fetch appointment details
+        appointments_ref = db.reference('appointment')
+        appointment_info = appointments_ref.child(appointment_id).get()
 
-        # Ensure the header buttons and logo remain visible
-        header_frame = tk.Frame(detail_frame, bg='#f7f7eb')
-        header_frame.pack(fill=tk.X)
-
-        # Load the logo image
-        logo_image = tk.PhotoImage(file=logo_path)
-        logo_image = logo_image.subsample(2, 2)  # Resize if needed
-
-        # Add the logo to the header
-        logo_label = tk.Label(header_frame, image=logo_image, bg='#f7f7eb')
-        logo_label.image = logo_image  # Keep a reference to avoid garbage collection
-        logo_label.pack(side=tk.LEFT, padx=10, pady=10)
-
-        # Open the doctor_list.py script using subprocess
-        def open_doctor_list():
-            for widget in root.winfo_children():
-                widget.destroy()
-            DoctorListPage(root, logo_path, admin_id)
-
-        def open_patient_request():
-            for widget in root.winfo_children():
-                widget.destroy()
-            PatientRequest(root, logo_path, admin_id)
-
-        def start_login():
-            self.parent.destroy()
-            subprocess.Popen(["python", os.path.join(dir, 'Login.py')])
-
-        # Add buttons to the header with switched positions
-        btn_logout = ttk.Button(header_frame, text="Logout", style='unactive.TButton', command=start_login)
-        btn_logout.pack(side=tk.RIGHT, padx=10, pady=10)
-        btn_doctor_list = ttk.Button(header_frame, text="Doctor List", style='TButton', command=open_doctor_list)
-        btn_doctor_list.pack(side=tk.RIGHT, padx=10, pady=10)
-        btn_patient_request = ttk.Button(header_frame, text="Patient Request", style='unactive.TButton', command=open_patient_request)
-        btn_patient_request.pack(side=tk.RIGHT, padx=10, pady=10)
-
-        # Detailed appointment information
-        info1 = (
-            f"Requested at: {appt.get('created_at')}\n"
-            f"Patient Name: {appt.get('patient_name')}\n"
-            f"Patient Contact: {appt.get('patient_contact')}\n"
-            f"Patient Email: {appt.get('patient_email')}\n"
-            f"Description: {appt.get('description')}"
+        # Display detailed information
+        details_text = (
+            f"Created at: {appointment_info['created_at']}\n"
+            f"Patient Name: {appointment_info['username']}\n"
+            f"Patient Contact: {appointment_info['phone']}\n"
+            f"Patient Email: {appointment_info['email']}\n"
+            f"Clinic Name: {appointment_info['clinic_name']}\n"
+            f"Doctor Name: {appointment_info['doctor_name']}\n"
+            f"Specialty: {appointment_info['specialty']}\n"
+            f"Appointment Date and Time: {appointment_info['appointment_date']} - {appointment_info['appointment_time']}\n"
+            f"Status: {appointment_info['status']}\n"
         )
-        info_label1 = tk.Label(detail_frame, text=info1, anchor="w", justify=tk.LEFT, bg="white", width=132, height=5,
-                               font=("Arial", 11))  # Adjust font size here
-        info_label1.pack(anchor="w", padx=20, pady=(10, 5))
 
-        info2 = (
-            f"Appointment Detail:\n"
-            f"Clinic Name: {appt.get('clinic_name')}\n"
-            f"Doctor Name: {appt.get('doctor_name')}\n"
-            f"Specialty: {appt.get('specialty')}\n"
-            f"Date: {appt.get('appointment_date')}\n"
-            f"Time: {appt.get('appointment_time')}\n"
-            f"Status: {appt.get('status')}\n"
-        )
-        info_label2 = tk.Label(detail_frame, text=info2, anchor="w", justify=tk.LEFT, bg="white", width=132, height=8,
-                               font=("Arial", 11))  # Adjust font size here
-        info_label2.pack(anchor="w", padx=20, pady=(10, 5))
+        details_label = tk.Label(self.patientrequest_frame, text=details_text, font=("Arial", 12), bg='#f7f7eb', justify=tk.LEFT)
+        details_label.pack(pady=10, padx=20, anchor="w", fill=tk.BOTH)
 
-        # Add "View Doctor Schedule" button to view the doctor's schedule
-        def view_doctor_schedule():
-            # Replace with logic to fetch doctor ID and open schedule
-            doctor_id = appt.get('doctor_id')  # Assuming doctor_id is stored in appointment data
-            self.open_doctor_schedule(doctor_id)
+        # Button to go back to appointment list
+        back_button = ttk.Button(self.patientrequest_frame, image=self.back_icon_image, style='TButton', command=self.refresh_appointments)
+        back_button.pack(side=tk.TOP, anchor='ne', pady=1, padx=40)
 
-        view_schedule_button = ttk.Button(detail_frame, text="View Doctor Schedule", command=view_doctor_schedule)
-        view_schedule_button.pack(anchor="center", pady=20)
+        # Button to view doctor schedule
+        view_schedule_button = ttk.Button(self.patientrequest_frame, text="View Doctor Schedule", style='TButton', command=lambda: self.view_doctor_schedule(appointment_info['doctor_id']))
+        view_schedule_button.pack(side=tk.TOP, anchor='ne', pady=5, padx=40)
 
-        # Add Accept and Reject buttons to the detailed view
-        buttons_frame = ttk.Frame(detail_frame)
-        buttons_frame.pack(pady=20)
+    def view_doctor_schedule(self, doctor_id):
+        # Clear existing widgets
+        for widget in self.patientrequest_frame.winfo_children():
+            widget.destroy()
 
-        accept_button = ttk.Button(buttons_frame, text="Approve", command=lambda: self.update_appointment_status(appt_id, "Accepted"))
-        accept_button.pack(side=tk.LEFT, padx=10)
+        # Fetch doctor's schedule from Firebase or any other data source
+        # Example: Assuming you fetch the doctor's schedule from a database
+        doctor_schedule = {
+            'Monday': '9 AM - 5 PM',
+            'Tuesday': '9 AM - 5 PM',
+            'Wednesday': 'Off',
+            'Thursday': '9 AM - 1 PM',
+            'Friday': '9 AM - 5 PM',
+        }
 
-        reject_button = ttk.Button(buttons_frame, text="Reject", command=lambda: self.update_appointment_status(appt_id, "Rejected"))
-        reject_button.pack(side=tk.LEFT, padx=10)
+        # Display doctor's schedule
+        schedule_label_text = f"Doctor's Schedule\n\n"
+        for day, timing in doctor_schedule.items():
+            schedule_label_text += f"{day}: {timing}\n"
 
-        # Create a back button with an image
-        backIconImage = os.path.join(dir, 'C:/Users/mwk02/OneDrive/Desktop/5001CEMApril2024-main/CallADoctor/Images/back-icon.png')  # Path to back icon image
-        back_image = tk.PhotoImage(file=backIconImage)
-        back_image = back_image.subsample(20, 20)  # Resize the image as needed
+        schedule_label = tk.Label(self.patientrequest_frame, text=schedule_label_text, font=("Arial", 12), bg='#f7f7eb', justify=tk.LEFT)
+        schedule_label.pack(pady=10, padx=20, anchor="w", fill=tk.BOTH)
 
-        back_button = tk.Button(header_frame, image=back_image, command=self.refresh_ui, bg='#f7f7eb', bd=0)
-        back_button.image = back_image  # Keep a reference to avoid garbage collection
-        back_button.pack(side=tk.TOP, anchor='ne', pady=10, padx=10)
 
-        # Configure grid weights to ensure proper resizing
-        detail_frame.grid_columnconfigure(0, weight=1)
-        detail_frame.grid_rowconfigure(1, weight=1)
+    def accept_appointment(self, appointment_id):
+        # Update appointment status to "Accepted" in Firebase
+        appointments_ref = db.reference('appointment')
+        appointments_ref.child(appointment_id).update({'status': 'Accepted'})
 
+        # Refresh appointment list
+        self.refresh_appointments()
+
+    def reject_appointment(self, appointment_id):
+        # Update appointment status to "Rejected" in Firebase
+        appointments_ref = db.reference('appointment')
+        appointments_ref.child(appointment_id).update({'status': 'Rejected'})
+
+        # Refresh appointment list
+        self.refresh_appointments()
 
 class DoctorListPage(tk.Frame):
     def __init__(self, parent, logo_path, admin_id):
@@ -355,11 +299,11 @@ class DoctorListPage(tk.Frame):
             self.parent.destroy()
             subprocess.Popen(["python", os.path.join(dir, 'Login.py')])
 
-        btn_logout = ttk.Button(header_frame, text="Logout", style='unactive.TButton', command=start_login)
+        btn_logout = ttk.Button(header_frame, text="Logout", style='TButton', command=start_login)
         btn_logout.pack(side=tk.RIGHT, padx=10, pady=10)
-        btn_doctor_list = ttk.Button(header_frame, text="Doctor List", style='TButton', command=open_doctor_list)
+        btn_doctor_list = ttk.Button(header_frame, text="Doctor List", style='unactive.TButton', command=open_doctor_list)
         btn_doctor_list.pack(side=tk.RIGHT, padx=10, pady=10)
-        btn_patient_request = ttk.Button(header_frame, text="Patient Request", style='unactive.TButton', command=open_patient_request)
+        btn_patient_request = ttk.Button(header_frame, text="Patient Request", style='TButton', command=open_patient_request)
         btn_patient_request.pack(side=tk.RIGHT, padx=10, pady=10)
 
         # Create a frame for the main content
