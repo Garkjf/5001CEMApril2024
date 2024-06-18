@@ -16,7 +16,7 @@ class SystemAdministrator:
         self.name = None
         self.email = None
         self.phone_number = None
-        self.requests = [] 
+        self.requests = {}
         # self.system_admin = system_admin
 
         self.window = root
@@ -41,6 +41,7 @@ class SystemAdministrator:
         clinics_ref = db.reference('clinicAdmins')
 
         clinics = clinics_ref.get()
+        self.requests = clinics
 
         clinic_state_options = ["All"]
         clinic_states = set()
@@ -75,18 +76,18 @@ class SystemAdministrator:
         for widget in self.request_list_frame.winfo_children():
             widget.destroy()
 
-        for clinic in self.requests:
-            if clinic['status'] == 'Pending':
+        for clinic in self.requests.values():
+            if clinic.get('status') == 'Pending':
                 frame = tk.Frame(self.request_list_frame, bd=2, relief="groove")
                 frame.pack(fill="x", padx=5, pady=5)
 
-                tk.Label(frame, text=f"Clinic Name: {clinic['name']}").pack(side="left", padx=5)
+                tk.Label(frame, text=f"Clinic Name: {clinic['clinic_name']}").pack(side="left", padx=5)
                 tk.Button(frame, text="Approve", command=lambda c=clinic: self.approveClinic(c)).pack(side="right", padx=5)
                 tk.Button(frame, text="Reject", command=lambda c=clinic: self.rejectClinic(c)).pack(side="right", padx=5)
 
 
 if __name__ == "__main__":
-    system_admin = sys.argv[0] 
+    system_admin = sys.argv[1] 
 
     root = tk.Tk()  # Create a new Tk root window
     root.title("Call a Doctor - System Administrator")  # Set the title of the window
