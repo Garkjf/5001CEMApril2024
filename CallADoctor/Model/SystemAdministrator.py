@@ -81,9 +81,13 @@ class SystemAdministrator:
                 frame = tk.Frame(self.request_list_frame, bd=2, relief="groove")
                 frame.pack(fill="x", padx=5, pady=5)
 
-                tk.Label(frame, text=f"Clinic Name: {clinic['clinic_name']}").pack(side="left", padx=5)
-                tk.Button(frame, text="Approve", command=lambda c=clinic: self.approveClinic(c)).pack(side="right", padx=5)
-                tk.Button(frame, text="Reject", command=lambda c=clinic: self.rejectClinic(c)).pack(side="right", padx=5)
+                tk.Label(frame, text=f"Clinic Name: {clinic['clinic_name']}").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+                tk.Label(frame, text=f"Clinic State: {clinic['clinic_state']}").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+                tk.Label(frame, text=f"Admin Name: {clinic['username']}").grid(row=2, column=0, padx=5, pady=5, sticky="w")
+                tk.Label(frame, text=f"Email: {clinic['email']}").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+                tk.Button(frame, text="Approve", command=lambda c=clinic: self.approveClinic(c), fg="white", bg="blue").grid(row=2, column=3, padx=5, pady=5, sticky="e")
+                tk.Button(frame, text="Reject", command=lambda c=clinic: self.rejectClinic(c), fg="white", bg="red").grid(row=3, column=3, padx=5, pady=5, sticky="e")
+
 
 
 if __name__ == "__main__":
