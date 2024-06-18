@@ -837,29 +837,64 @@ class PatientPage(tk.Frame):
 
     def appointmentRequest(self):
         status_window = tk.Toplevel(self)
+
+        # Configure the canvas
+        my_canvas.configure(yscrollcommand=my_scrollbar_vertival.set)
+
         status_window.title("Appointment Status")
         
         status_window.configure(bg="#F6F6E9")
 
-        status_label = tk.Label(status_window, text="Appointment Status", bg="#F6F6E9", font=("Arial", 14, "bold"))
-        status_label.pack(pady=10)
+        main_frame = tk.Frame(status_window, padx=10, pady=10)
+        main_frame.grid(row=0, column=0)
+        
+        patient_name = db.reference(f"patients/{self.patient_id}").get()['username']
+        appointments = filter(lambda appointment: appointment['username'] == patient_name, 
+               db.reference('appointment').get().values())
+        
+        for i, appointment in enumerate(appointments):
+            row, column = divmod(i, 2)
+            appointment_frame = tk.Frame(status_window, padx=10, pady=10, bg="#ffffff")
+            appointment_frame.grid(row=row, column=column, sticky="w", padx=10, pady=10)
 
-        status_var = tk.StringVar()
-        status_var.set("Pending")
+            request_date = appointment.get('updated_at')
 
-        status_display = tk.Label(status_window, textvariable=status_var, bg="#FFFFFF", width=30, border=2, relief="groove")
-        status_display.pack(pady=10)
+            tk.Label(appointment_frame, text=f"Requested at: {request_date}", bg="#ffffff").\
+            grid(row=0, column=0, sticky="w")
+
+            color = ""
+            # Appointment Status
+            match appointment.get('status'):
+                case "Pending": color = "#3465E1"
+                case "Approved": color = "#5FCF37"
+                case "Rejected": color = "#DD0202"
+                case _: color = "#000000"
+            
+            tk.Label(appointment_frame, text=appointment.get('status'), bg=color, fg="#ffffff").\
+            grid(row=0, column=1, sticky="e")
+
+            appointmentInfo = {
+                "Clinic Name": appointment.get('clinic_name'),
+                "Doctor Name": appointment.get('doctor_name'),
+                "Speciality": appointment.get('speciality'),
+                "Appointment Date and Time": 
+                f"{appointment.get('appointment_date')} {appointment.get('appointment_time')}",
+            }
+
+            for row, (label, value) in enumerate(appointmentInfo.items(), 1):
+                tk.Label(appointment_frame, text=f"{label}: {value}", bg="#ffffff").\
+                grid(row=row, column=0, sticky="w", columnspan=2, padx=5, pady=5)
 
 
-        def update_status(self,appointmentNo):
-            appointment_ref = db.reference('appointment/' + appointmentNo)
-            appointment_data = appointment_ref.get()
-            if appointment_data:
-                status = appointment_data.get('status')
-                status_var.set(status)
-            status_window.after(10000, update_status)  
+        # def update_status():
+        #     appointment_ref = db.reference('appointment')
+        #     appointment_data = appointment_ref.get()
+        #     if appointment_data:
+        #         status = appointment_data.get('status')
+        #         status_var.set(status)
+        #     status_window.after(10000, update_status)
 
-        update_status()     
+        # update_status()
 
     def logout(self):
         start_login()
