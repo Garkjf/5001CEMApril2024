@@ -26,12 +26,12 @@ class SystemAdministrator:
 
     def approveClinic(self, clinic):
         clinic['status'] = 'Approved'
-        messagebox.showinfo("Success", f"Clinic {clinic['name']} approved successfully!")
+        messagebox.showinfo("Success", f"Clinic {clinic['clinic_name']} approved successfully!")
         self.updateRequestList()
 
     def rejectClinic(self, clinic):
         clinic['status'] = 'Rejected'
-        messagebox.showinfo("Success", f"Clinic {clinic['name']} rejected.")
+        messagebox.showinfo("Success", f"Clinic {clinic['clinic_name']} rejected.")
         self.updateRequestList()
 
     def manageClinics(self):
