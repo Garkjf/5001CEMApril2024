@@ -2,7 +2,11 @@ import tkinter as tk
 from tkinter import messagebox
 import sys
 import os
+import subprocess
 from firebase_admin import credentials, initialize_app ,db
+
+
+
 
 dir = os.path.dirname(__file__)
 
@@ -26,13 +30,22 @@ class SystemAdministrator:
 
     def approveClinic(self, clinic):
         clinic['status'] = 'Approved'
+        self.update_clinic_status(clinic['status'], 'Approved')
         messagebox.showinfo("Success", f"Clinic {clinic['clinic_name']} approved successfully!")
         self.updateRequestList()
 
     def rejectClinic(self, clinic):
         clinic['status'] = 'Rejected'
+        self.update_clinic_status(clinic['status'], 'Rejected')
         messagebox.showinfo("Success", f"Clinic {clinic['clinic_name']} rejected.")
         self.updateRequestList()
+
+    def update_clinic_status(self, clinic_id, status):
+        try:
+            clinic_ref = db.reference(f'clinicAdmins/{clinic_id}')
+            clinic_ref.update({'status': status})
+        except Exception as e:
+            messagebox.showerror("Database Error", f"An error occurred: {e}")
 
     def manageClinics(self):
         cred = credentials.Certificate(serviceAccountKeyFile)
@@ -46,7 +59,8 @@ class SystemAdministrator:
         clinic_state_options = ["All"]
         clinic_states = set()
     
-        for status, clinic_data in clinics.items():
+        for clinic_id, clinic_data in clinics.items():
+            clinic_data['id'] = clinic_id  # Add the clinic ID to the clinic data
             clinic_state = clinic_data.get('clinic_state')
             if clinic_state not in clinic_states:
                 clinic_state_options.append(clinic_state)
@@ -72,6 +86,7 @@ class SystemAdministrator:
 
         self.updateRequestList()
 
+
     def updateRequestList(self):
         for widget in self.request_list_frame.winfo_children():
             widget.destroy()
@@ -88,13 +103,34 @@ class SystemAdministrator:
                 tk.Button(frame, text="Approve", command=lambda c=clinic: self.approveClinic(c), fg="white", bg="blue").grid(row=2, column=3, padx=5, pady=5, sticky="e")
                 tk.Button(frame, text="Reject", command=lambda c=clinic: self.rejectClinic(c), fg="white", bg="red").grid(row=3, column=3, padx=5, pady=5, sticky="e")
 
+    def ClinicList(self):
+         for widget in self.request_list_frame.winfo_children():
+            widget.destroy()
+
+         for clinic in self.requests.values():
+            if clinic.get('status') == 'Approved':
+                frame = tk.Frame(self.request_list_frame, bd=2, relief="groove")
+                frame.pack(fill="x", padx=5, pady=5)
+
+                tk.Label(frame, text=f"Clinic Name: {clinic['clinic_name']}").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+                tk.Label(frame, text=f"Clinic State: {clinic['clinic_state']}").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+                tk.Label(frame, text=f"Admin Name: {clinic['username']}").grid(row=2, column=0, padx=5, pady=5, sticky="w")
+                tk.Label(frame, text=f"Email: {clinic['email']}").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+
+    def logout(self):
+        start_login()
+        self.master.quit()
+
+    def start_login():
+        subprocess.Popen(["python", os.path.join(dir, 'Login.py')])
+
 
 
 if __name__ == "__main__":
     system_admin = sys.argv[1] 
 
-    root = tk.Tk()  # Create a new Tk root window
-    root.title("Call a Doctor - System Administrator")  # Set the title of the window
+    root = tk.Tk() 
+    root.title("Call a Doctor - System Administrator")  
     root.geometry("1200x600")
     root.configure(background='#f6f6e9')
 
@@ -141,6 +177,12 @@ if __name__ == "__main__":
     # Body
     app = SystemAdministrator(second_frame)  # Pass the second_frame window to your SystemAdministrator class
 
+    appointment_request_btn = tk.Button(nav_bar, text="Clinic Request", command=app.manageClinics)
+    appointment_request_btn.pack(side="left", fill="x")
+    appointment_request_btn = tk.Button(nav_bar, text="Clinic List", command=app.ClinicList)
+    appointment_request_btn.pack(side="left", fill="x")
+    appointment_request_btn = tk.Button(nav_bar, text="Log Out", command=app.logout)
+    appointment_request_btn.pack(side="left", fill="x")
    
 
     # Add more buttons here as needed
