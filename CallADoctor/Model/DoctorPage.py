@@ -34,7 +34,7 @@ class DoctorPage(tk.Frame):
         self.prescriptions = db.reference('prescriptions').get()
 
         self.bold14 = Font(self.master, size=14, weight=BOLD)
-
+        self.bold10 = Font(self.master, size=10, weight=BOLD)
         self.showMainPage(self.patients)
 
     # Get patients that have appointments in the same clinic as the doctor
@@ -62,12 +62,15 @@ class DoctorPage(tk.Frame):
         label = tk.Label(top_frame, text="Search For Patient", font=self.bold14, background="#9AB892")
         label.grid(row=0, column=0, sticky="w")
 
+        label = tk.Label(top_frame, text="Search by Patient Name: ", font=self.bold10, background="#9AB892")
+        label.grid(row=1, column=0, sticky="w")
+
         self.patient_name_entry = tk.Entry(top_frame)
-        self.patient_name_entry.grid(row=1, column=0, pady=10, sticky="w")
+        self.patient_name_entry.grid(row=1, column=1, pady=10, sticky="w")
 
         submit_button = tk.Button(top_frame, text="Search", bg="#0275DD", fg="#ffffff", 
                                   command=self.search_patient)
-        submit_button.grid(row=1, column=1, pady=10, sticky="w")
+        submit_button.grid(row=1, column=2, pady=10, padx= 10, sticky="w")
 
         patients_list = tk.Frame(self, bg="#9AB892")
         patients_list.grid(row=1, column=0, columnspan=2)
