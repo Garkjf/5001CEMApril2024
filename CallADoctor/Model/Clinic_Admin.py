@@ -91,15 +91,17 @@ class PatientRequest(tk.Frame):
 
         # Fetch clinic details from Firebase
         clinic_ref = db.reference('clinicAdmins/' + self.admin_id)
+        clinic_data = clinic_ref.get()
 
-        # Extract clinic name and state
-        clinic_name = clinic_ref.get()['clinic_name']
-        clinic_state = clinic_ref.get()['clinic_state']
+        if clinic_data:
+            # Extract clinic name and state
+            clinic_name = clinic_data.get('clinic_name', '')
+            clinic_state = clinic_data.get('clinic_state', '')
 
-        # Add a label for patient requests with dynamically fetched text
-        requests_label_text = f"{clinic_name} {clinic_state} Patient’s Request"
-        requests_label = tk.Label(self.requests_frame, text=requests_label_text, font=("Arial", 16, "bold"), bg='#f7f7eb')
-        requests_label.pack(pady=10, padx=20)  # Add padding to the sides to keep the text from expanding
+            # Add a label for patient requests with dynamically fetched text
+            requests_label_text = f"{clinic_name} {clinic_state} Patient’s Request"
+            requests_label = tk.Label(self.requests_frame, text=requests_label_text, font=("Arial", 16, "bold"), bg='#f7f7eb')
+            requests_label.pack(pady=10, padx=20)  # Add padding to the sides to keep the text from expanding
 
         # Create a canvas widget and associate it with a scrollbar
         canvas = tk.Canvas(self.main_frame, bg='#f7f7eb')
@@ -117,7 +119,7 @@ class PatientRequest(tk.Frame):
         
         canvas.create_window((0, 0), window=self.patientrequest_frame, anchor="nw")
 
-        # Fetch appointment data from Firebase
+        # Fetch appointment data from Firebase and display
         self.refresh_appointments()
 
     def refresh_appointments(self):
@@ -160,67 +162,6 @@ class PatientRequest(tk.Frame):
                     reject_button = ttk.Button(appointment_box, text="Reject", style='TButton', command=lambda app_id=appointment_id: self.reject_appointment(app_id))
                     reject_button.pack(side=tk.LEFT, padx=5, pady=5)
 
-        # Update the scroll region of the canvas
-        self.parent.update_idletasks()
-        self.patientrequest_frame.update_idletasks()
-
-    def view_appointment_details(self, appointment_id):
-        # Clear appointment boxes
-        for widget in self.patientrequest_frame.winfo_children():
-            widget.destroy()
-
-        # Fetch appointment details
-        appointments_ref = db.reference('appointment')
-        appointment_info = appointments_ref.child(appointment_id).get()
-
-        # Display detailed information
-        details_text = (
-            f"Created at: {appointment_info['created_at']}\n"
-            f"Patient Name: {appointment_info['username']}\n"
-            f"Patient Contact: {appointment_info['phone']}\n"
-            f"Patient Email: {appointment_info['email']}\n"
-            f"Clinic Name: {appointment_info['clinic_name']}\n"
-            f"Doctor Name: {appointment_info['doctor_name']}\n"
-            f"Specialty: {appointment_info['specialty']}\n"
-            f"Appointment Date and Time: {appointment_info['appointment_date']} - {appointment_info['appointment_time']}\n"
-            f"Status: {appointment_info['status']}\n"
-        )
-
-        details_label = tk.Label(self.patientrequest_frame, text=details_text, font=("Arial", 12), bg='#f7f7eb', justify=tk.LEFT)
-        details_label.pack(pady=10, padx=20, anchor="w", fill=tk.BOTH)
-
-        # Button to go back to appointment list
-        back_button = ttk.Button(self.patientrequest_frame, image=self.back_icon_image, style='TButton', command=self.refresh_appointments)
-        back_button.pack(side=tk.TOP, anchor='ne', pady=1, padx=40)
-
-        # Button to view doctor schedule
-        view_schedule_button = ttk.Button(self.patientrequest_frame, text="View Doctor Schedule", style='TButton', command=lambda: self.view_doctor_schedule(appointment_info['doctor_id']))
-        view_schedule_button.pack(side=tk.TOP, anchor='ne', pady=5, padx=40)
-
-    def view_doctor_schedule(self, doctor_id):
-        # Clear existing widgets
-        for widget in self.patientrequest_frame.winfo_children():
-            widget.destroy()
-
-        # Fetch doctor's schedule from Firebase or any other data source
-        # Example: Assuming you fetch the doctor's schedule from a database
-        doctor_schedule = {
-            'Monday': '9 AM - 5 PM',
-            'Tuesday': '9 AM - 5 PM',
-            'Wednesday': 'Off',
-            'Thursday': '9 AM - 1 PM',
-            'Friday': '9 AM - 5 PM',
-        }
-
-        # Display doctor's schedule
-        schedule_label_text = f"Doctor's Schedule\n\n"
-        for day, timing in doctor_schedule.items():
-            schedule_label_text += f"{day}: {timing}\n"
-
-        schedule_label = tk.Label(self.patientrequest_frame, text=schedule_label_text, font=("Arial", 12), bg='#f7f7eb', justify=tk.LEFT)
-        schedule_label.pack(pady=10, padx=20, anchor="w", fill=tk.BOTH)
-
-
     def accept_appointment(self, appointment_id):
         # Update appointment status to "Accepted" in Firebase
         appointments_ref = db.reference('appointment')
@@ -237,6 +178,112 @@ class PatientRequest(tk.Frame):
         # Refresh appointment list
         self.refresh_appointments()
 
+        # Update the scroll region of the canvas
+        self.parent.update_idletasks()
+        self.patientrequest_frame.update_idletasks()
+
+    def view_appointment_details(self, appointment_id):
+        # Clear appointment boxes
+        for widget in self.patientrequest_frame.winfo_children():
+            widget.destroy()
+
+        # Fetch appointment details
+        appointments_ref = db.reference('appointment')
+        appointment_info = appointments_ref.child(appointment_id).get()
+
+        # Button to go back to appointment list
+        back_button = ttk.Button(self.patientrequest_frame, image=self.back_icon_image, style='TButton', command=self.refresh_appointments)
+        back_button.pack(side=tk.TOP, anchor='ne', pady=1, padx=40)
+
+        # Display detailed information
+        details_text = (
+            f"Created at: {appointment_info.get('created_at', '')}\n"
+            f"Patient Information:\n"
+            f"Patient Name: {appointment_info.get('username', '')}\n"
+            f"Patient Email Address: {appointment_info.get('email', '')}\n"
+            f"Patient Contact: {appointment_info.get('phone', '')}\n"
+            f"\n"
+            f"Appointment Detail:\n"
+            f"Clinic Name: {appointment_info.get('clinic_name', '')}\n"
+            f"Doctor Name: {appointment_info.get('doctor_name', '')}\n"
+            f"Specialty: {appointment_info.get('specialty', '')}\n"
+            f"Appointment Date and Time: {appointment_info.get('appointment_date', '')} - {appointment_info.get('appointment_time', '')}\n"
+        )
+
+        details_label = tk.Label(self.patientrequest_frame, text=details_text, font=("Arial", 12), bg='#f7f7eb', justify=tk.LEFT)
+        details_label.pack(pady=10, padx=0, anchor="w", fill=tk.BOTH)
+
+        # Buttons for accepting and rejecting appointment
+        accept_button = ttk.Button(self.patientrequest_frame, text="Accept", style='TButton', command=lambda: self.accept_appointment(appointment_id))
+        accept_button.pack(side=tk.LEFT, padx=5, pady=5)
+        reject_button = ttk.Button(self.patientrequest_frame, text="Reject", style='TButton', command=lambda: self.reject_appointment(appointment_id))
+        reject_button.pack(side=tk.LEFT, padx=5, pady=5)
+
+        # Button to view doctor schedule
+        view_schedule_button = ttk.Button(self.patientrequest_frame, text="View Doctor Schedule", style='TButton', command=lambda: self.view_doctor_schedule(appointment_id))
+        view_schedule_button.pack(side=tk.LEFT, padx=5, pady=5)
+
+    def view_doctor_schedule(self, appointment_id):
+        # Clear appointment boxes
+        for widget in self.patientrequest_frame.winfo_children():
+            widget.destroy()
+
+        # Fetch appointment details
+        appointments_ref = db.reference('appointment')
+        appointment_info = appointments_ref.child(appointment_id).get()
+
+        # Fetch doctor details based on doctor_name from appointment_info
+        doctor_name = appointment_info.get('doctor_name')
+        doctors_ref = db.reference('doctors')
+        doctor_data = None
+
+        # Find the doctor with matching username (doctor_name)
+        for doc_id, doc_info in doctors_ref.get().items():
+            if doc_info.get('username') == doctor_name:
+                doctor_data = doc_info
+                break
+
+        if doctor_data:
+            # Button to go back to appointment details
+            back_button = ttk.Button(self.patientrequest_frame, image=self.back_icon_image, style='TButton', command=lambda: self.view_appointment_details(appointment_id))
+            back_button.pack(side=tk.TOP, anchor='ne', pady=1, padx=1)
+
+            # Display doctor information
+            # Display doctor details in the main frame
+            DoctorDetail_label = ttk.Label(self.patientrequest_frame, text=f"Doctor Detail: ", font=("Arial", 14), background="#f7f7eb")
+            DoctorDetail_label.pack(pady=10, anchor="w")
+
+            name_label = ttk.Label(self.patientrequest_frame, text=f"Doctor Name: {doc_info.get('username')}", font=("Arial", 12), background="#f7f7eb")
+            name_label.pack(pady=10, anchor="w")
+
+            specialty_label = ttk.Label(self.patientrequest_frame, text=f"Speciality: {doc_info.get('specialist')}", font=("Arial", 12), background="#f7f7eb")
+            specialty_label.pack(pady=10, anchor="w")
+
+            ContactDetail_label = ttk.Label(self.patientrequest_frame, text=f"Contact Detail: ", font=("Arial", 14), background="#f7f7eb")
+            ContactDetail_label.pack(pady=10, anchor="w")
+
+            email_label = ttk.Label(self.patientrequest_frame, text=f"Email Address: {doc_info.get('email')}", font=("Arial", 12), background="#f7f7eb")
+            email_label.pack(pady=10, anchor="w")
+
+            # Assuming 'phone' is a field in your database for each doctor
+            phone_label = ttk.Label(self.patientrequest_frame, text=f"Phone Number: {doc_info.get('phone')}", font=("Arial", 12), background="#f7f7eb")
+            phone_label.pack(pady=10, anchor="w")
+
+            columns = ('Patient Name','Appointment and Time', 'Status')
+            tree = ttk.Treeview(self.patientrequest_frame, columns=columns, show='headings')
+
+            # Define column headings
+            for col in columns:
+                tree.heading(col, text=col)
+
+            # Insert appointment data into Treeview
+            tree.insert('', 'end', values=(appointment_info.get('username', ''),
+                                        f"{appointment_info.get('appointment_date', '')} {appointment_info.get('appointment_time', '')}",
+                                        appointment_info.get('status', '')))
+
+            tree.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
+
+
 class DoctorListPage(tk.Frame):
     def __init__(self, parent, logo_path, admin_id):
         super().__init__(parent)
@@ -249,6 +296,8 @@ class DoctorListPage(tk.Frame):
         ]
         self.create_widgets()
         self.load_doctors()
+        self.doctors = db.reference('doctors').get()
+        self.clinic = db.reference('clinicAdmins/' + admin_id).get()
 
     def fetch_specialties(self):
         # Fetch specialties from the Firebase database
@@ -360,7 +409,7 @@ class DoctorListPage(tk.Frame):
         self.specialty_combobox.bind("<<ComboboxSelected>>", self.filter_doctors)
 
     def load_doctors(self):
-        self.clear_content()
+        self.clear_content()    
         ref = db.reference('doctors')
         doctors = ref.get()
 
@@ -408,8 +457,7 @@ class DoctorListPage(tk.Frame):
         for widget in self.main_frame.winfo_children():
             widget.destroy()
 
-        ref = db.reference(f'doctors/{doctor_id}')
-        doc_info = ref.get()
+        doctor_data = db.reference('doctors/'+ doctor_id).get()
 
         # Create a back button with an image
         back_image = tk.PhotoImage(file=backIconImage)
@@ -422,23 +470,23 @@ class DoctorListPage(tk.Frame):
         DoctorDetail_label = ttk.Label(self.main_frame, text=f"Doctor Detail: ", font=("Arial", 14), background="#f7f7eb")
         DoctorDetail_label.pack(pady=10, anchor="w")
 
-        name_label = ttk.Label(self.main_frame, text=f"Doctor Name: {doc_info.get('username')}", font=("Arial", 12), background="#f7f7eb")
+        name_label = ttk.Label(self.main_frame, text=f"Doctor Name: {doctor_data.get('username')}", font=("Arial", 12), background="#f7f7eb")
         name_label.pack(pady=10, anchor="w")
 
-        specialty_label = ttk.Label(self.main_frame, text=f"Speciality: {doc_info.get('specialist')}", font=("Arial", 12), background="#f7f7eb")
+        specialty_label = ttk.Label(self.main_frame, text=f"Speciality: {doctor_data.get('specialist')}", font=("Arial", 12), background="#f7f7eb")
         specialty_label.pack(pady=10, anchor="w")
 
         ContactDetail_label = ttk.Label(self.main_frame, text=f"Contact Detail: ", font=("Arial", 14), background="#f7f7eb")
         ContactDetail_label.pack(pady=10, anchor="w")
 
-        email_label = ttk.Label(self.main_frame, text=f"Email Address: {doc_info.get('email')}", font=("Arial", 12), background="#f7f7eb")
+        email_label = ttk.Label(self.main_frame, text=f"Email Address: {doctor_data.get('email')}", font=("Arial", 12), background="#f7f7eb")
         email_label.pack(pady=10, anchor="w")
 
         # Assuming 'phone' is a field in your database for each doctor
-        phone_label = ttk.Label(self.main_frame, text=f"Phone Number: {doc_info.get('phone')}", font=("Arial", 12), background="#f7f7eb")
+        phone_label = ttk.Label(self.main_frame, text=f"Phone Number: {doctor_data.get('phone')}", font=("Arial", 12), background="#f7f7eb")
         phone_label.pack(pady=10, anchor="w")
 
-        if doc_info.get('status') == 'Pending':
+        if doctor_data.get('status') == 'Pending':
             # Create a frame for the accept and reject buttons with a background color
             buttons_frame = ttk.Frame(self.main_frame, style='Background.TFrame')  # Use a custom style
             buttons_frame.pack(pady=10)
@@ -452,6 +500,51 @@ class DoctorListPage(tk.Frame):
 
             reject_button = ttk.Button(buttons_frame, text="Reject", command=lambda: self.reject_request(doctor_id))
             reject_button.pack(side=tk.LEFT, padx=5)
+            
+            # Create a back button with an image
+            back_image = tk.PhotoImage(file=backIconImage)
+            back_image = back_image.subsample(20, 20)  # Resize the image as needed
+            back_button = tk.Button(self.main_frame, image=back_image, command=self.reinitialize_page, bg='#f7f7eb', bd=0)
+            back_button.image = back_image  # Keep a reference to avoid garbage collection
+            back_button.pack(side=tk.TOP, anchor='ne', pady=10, padx=10)
+
+
+            # Fetch and display appointments
+            appointments_ref = db.reference('appointment').order_by_child('username').get()
+
+            if appointments_ref:
+                appointments_label = ttk.Label(self.main_frame, text="Appointments: ", font=("Arial", 14), background="#f7f7eb")
+                appointments_label.pack(pady=10, anchor="w")
+
+                for appointment_info in appointments_ref.items():
+                    appointment_label_text = (
+                        f"Patient Name: {appointment_info.get('patient_name')}\n"
+                        f"Date: {appointment_info.get('appointment_date')}\n"
+                        f"Time: {appointment_info.get('appointment_time')}\n"
+                        # Add more fields as needed
+                    )
+
+                    appointment_label = ttk.Label(self.main_frame, text=appointment_label_text, font=("Arial", 12), background="#f7f7eb")
+                    appointment_label.pack(pady=5, padx=10, anchor="w")
+
+            else:
+                no_appointments_label = ttk.Label(self.main_frame, text="No appointments scheduled.", font=("Arial", 12), background="#f7f7eb")
+                no_appointments_label.pack(pady=10, anchor="w")
+
+            if doctor_data.get('status') == 'Pending':
+                # Create a frame for the accept and reject buttons with a background color
+                buttons_frame = ttk.Frame(self.main_frame, style='Background.TFrame')  # Use a custom style
+                buttons_frame.pack(pady=10)
+
+                # Define a custom style for the frame's background color (optional)
+                style = ttk.Style()
+                style.configure('Background.TFrame', background="#f7f7eb")  # Set desired background color
+
+                accept_button = ttk.Button(buttons_frame, text="Approved    ", command=lambda: self.accept_request(doctor_id))
+                accept_button.pack(side=tk.LEFT, padx=5)
+
+                reject_button = ttk.Button(buttons_frame, text="Reject", command=lambda: self.reject_request(doctor_id))
+                reject_button.pack(side=tk.LEFT, padx=5)
 
 
     def reinitialize_page(self):
