@@ -334,10 +334,10 @@ class DoctorPage(tk.Frame):
     def addPrescription(self, patient_id):
         current_datetime = datetime.now(pytz.timezone('Asia/Kuala_Lumpur')).strftime("%Y-%m-%d %H:%M:%S")
         newPrescription = {
-            "diagnosis": self.diagnosis_entry.get('1.0', 'end'),
-            "treatment": self.treatment_entry.get('1.0', 'end'),
-            "remark": self.remark_entry.get('1.0', 'end'),
-            "symptoms": self.diagnosis_entry.get('1.0', 'end'),
+            "diagnosis": self.diagnosis_entry.get(),
+            "treatment": self.treatment_entry.get(),
+            "remark": self.remark_entry.get(),
+            "symptoms": self.diagnosis_entry.get(),
             "patientID": patient_id,
             "doctorID": doctor_id,
             "created_at": current_datetime
@@ -484,7 +484,7 @@ if __name__ == "__main__":
 
     # Create buttons for navigation bar
     search_clinics_btn = tk.Button(nav_bar, text="Search Patients", 
-                                   command=lambda: app.showMainPage(app.patients))
+                                   command=lambda: app.showMainPage(app.getDefaultPatients()))
     search_clinics_btn.pack(side="left", fill="x")
 
     make_appointment_btn = tk.Button(nav_bar, text="Assigned Request", 
