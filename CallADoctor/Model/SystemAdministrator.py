@@ -3,10 +3,7 @@ from tkinter import messagebox
 import sys
 import os
 import subprocess
-from firebase_admin import credentials, initialize_app ,db
-
-
-
+from firebase_admin import credentials, initialize_app ,db, _apps as apps
 
 dir = os.path.dirname(__file__)
 
@@ -14,20 +11,17 @@ serviceAccountKeyFile = os.path.join(dir, '../calladoctor-serviceAccountKey.json
 logoImageFile = os.path.join(dir, '../Images/CallADoctor-logo-small.png')  # Change the path to your own logo image
 backIconImage = os.path.join(dir, '../Images/back-icon.png') # Change the path to your own logo image
 
-class SystemAdministrator:
-    def __init__(self, root):
+class SystemAdministrator(tk.Frame):
+    def __init__(self, root, parent=None, **kwargs):
         self.systemAdmin_id = None
         self.name = None
         self.email = None
         self.phone_number = None
         self.requests = {}
         # self.system_admin = system_admin
-
+        super().__init__(parent, bg="#F6F6E9", **kwargs)
         self.window = root
         self.manageClinics()
-        
-        
-
     def approveClinic(self, clinic):
         clinic['status'] = 'Approved'
         self.update_clinic_status(clinic['status'], 'Approved')
@@ -48,8 +42,9 @@ class SystemAdministrator:
             messagebox.showerror("Database Error", f"An error occurred: {e}")
 
     def manageClinics(self):
-        cred = credentials.Certificate(serviceAccountKeyFile)
-        initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
+        if not apps:
+            cred = credentials.Certificate(serviceAccountKeyFile)
+            initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
         # get clinic information
         clinics_ref = db.reference('clinicAdmins')
 
@@ -119,15 +114,12 @@ class SystemAdministrator:
 
     def logout(self):
         start_login()
-        self.master.quit()
+        quit()
 
-    def start_login():
-        subprocess.Popen(["python", os.path.join(dir, 'Login.py')])
-
-
+def start_login():
+    subprocess.Popen(["python", os.path.join(dir, 'Login.py')])
 
 if __name__ == "__main__":
-    system_admin = sys.argv[1] 
 
     root = tk.Tk() 
     root.title("Call a Doctor - System Administrator")  
