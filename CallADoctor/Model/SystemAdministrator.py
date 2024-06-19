@@ -18,19 +18,19 @@ class SystemAdministrator(tk.Frame):
         self.email = None
         self.phone_number = None
         self.requests = {}
-        # self.system_admin = system_admin
         super().__init__(parent, bg="#F6F6E9", **kwargs)
         self.window = root
         self.manageClinics()
+
     def approveClinic(self, clinic):
         clinic['status'] = 'Approved'
-        self.update_clinic_status(clinic['status'], 'Approved')
+        self.update_clinic_status(clinic['id'], 'Approved')
         messagebox.showinfo("Success", f"Clinic {clinic['clinic_name']} approved successfully!")
         self.updateRequestList()
 
     def rejectClinic(self, clinic):
         clinic['status'] = 'Rejected'
-        self.update_clinic_status(clinic['status'], 'Rejected')
+        self.update_clinic_status(clinic['id'], 'Rejected')
         messagebox.showinfo("Success", f"Clinic {clinic['clinic_name']} rejected.")
         self.updateRequestList()
 
@@ -53,7 +53,7 @@ class SystemAdministrator(tk.Frame):
 
         clinic_state_options = ["All"]
         clinic_states = set()
-    
+
         for clinic_id, clinic_data in clinics.items():
             clinic_data['id'] = clinic_id  # Add the clinic ID to the clinic data
             clinic_state = clinic_data.get('clinic_state')
@@ -70,7 +70,7 @@ class SystemAdministrator(tk.Frame):
 
         tk.Label(search_frame, text="Search by State:").pack(side="left", padx=5)
         self.search_state_var = tk.StringVar()
-        self.search_state_var.set("Choose State Clinics")
+        self.search_state_var.set("All")
         self.search_state_menu = tk.OptionMenu(search_frame, self.search_state_var, *clinic_state_options)
         self.search_state_menu.pack(side="left", padx=5)
 
@@ -81,28 +81,34 @@ class SystemAdministrator(tk.Frame):
 
         self.updateRequestList()
 
-
     def updateRequestList(self):
+        search_name = self.search_name_entry.get().strip().lower()
+        search_state = self.search_state_var.get().strip()
+
         for widget in self.request_list_frame.winfo_children():
             widget.destroy()
 
         for clinic in self.requests.values():
-            if clinic.get('status') == 'Pending':
-                frame = tk.Frame(self.request_list_frame, bd=2, relief="groove")
-                frame.pack(fill="x", padx=5, pady=5)
+            clinic_name = clinic.get('clinic_name', '').strip().lower()
+            clinic_state = clinic.get('clinic_state', '').strip()
 
-                tk.Label(frame, text=f"Clinic Name: {clinic['clinic_name']}").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-                tk.Label(frame, text=f"Clinic State: {clinic['clinic_state']}").grid(row=1, column=0, padx=5, pady=5, sticky="w")
-                tk.Label(frame, text=f"Admin Name: {clinic['username']}").grid(row=2, column=0, padx=5, pady=5, sticky="w")
-                tk.Label(frame, text=f"Email: {clinic['email']}").grid(row=3, column=0, padx=5, pady=5, sticky="w")
-                tk.Button(frame, text="Approve", command=lambda c=clinic: self.approveClinic(c), fg="white", bg="blue").grid(row=2, column=3, padx=5, pady=5, sticky="e")
-                tk.Button(frame, text="Reject", command=lambda c=clinic: self.rejectClinic(c), fg="white", bg="red").grid(row=3, column=3, padx=5, pady=5, sticky="e")
+            if clinic.get('status') == 'Pending':
+                if (not search_name or search_name in clinic_name) and (search_state == "All" or search_state == clinic_state):
+                    frame = tk.Frame(self.request_list_frame, bd=2, relief="groove")
+                    frame.pack(fill="x", padx=5, pady=5)
+
+                    tk.Label(frame, text=f"Clinic Name: {clinic['clinic_name']}").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+                    tk.Label(frame, text=f"Clinic State: {clinic['clinic_state']}").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+                    tk.Label(frame, text=f"Admin Name: {clinic['username']}").grid(row=2, column=0, padx=5, pady=5, sticky="w")
+                    tk.Label(frame, text=f"Email: {clinic['email']}").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+                    tk.Button(frame, text="Approve", command=lambda c=clinic: self.approveClinic(c), fg="white", bg="blue").grid(row=2, column=3, padx=5, pady=5, sticky="e")
+                    tk.Button(frame, text="Reject", command=lambda c=clinic: self.rejectClinic(c), fg="white", bg="red").grid(row=3, column=3, padx=5, pady=5, sticky="e")
 
     def ClinicList(self):
-         for widget in self.request_list_frame.winfo_children():
+        for widget in self.request_list_frame.winfo_children():
             widget.destroy()
 
-         for clinic in self.requests.values():
+        for clinic in self.requests.values():
             if clinic.get('status') == 'Approved':
                 frame = tk.Frame(self.request_list_frame, bd=2, relief="groove")
                 frame.pack(fill="x", padx=5, pady=5)
@@ -115,6 +121,7 @@ class SystemAdministrator(tk.Frame):
     def logout(self):
         start_login()
         quit()
+
 
 def start_login():
     subprocess.Popen(["python", os.path.join(dir, 'Login.py')])
@@ -169,7 +176,7 @@ if __name__ == "__main__":
     # Body
     app = SystemAdministrator(second_frame)  # Pass the second_frame window to your SystemAdministrator class
 
-    appointment_request_btn = tk.Button(nav_bar, text="Clinic Request", command=app.manageClinics)
+    appointment_request_btn = tk.Button(nav_bar, text="Clinic Request", command=app.updateRequestList)
     appointment_request_btn.pack(side="left", fill="x")
     appointment_request_btn = tk.Button(nav_bar, text="Clinic List", command=app.ClinicList)
     appointment_request_btn.pack(side="left", fill="x")
