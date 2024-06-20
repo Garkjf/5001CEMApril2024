@@ -9,8 +9,8 @@ import firebase_admin
 # Set up paths
 dir = os.path.dirname(__file__)
 serviceAccountKeyFile = os.path.join(dir, '../calladoctor-serviceAccountKey.json')
-logoImageFile = os.path.join(dir,'C:/Users/mwk02/OneDrive/Desktop/5001CEMApril2024-main/CallADoctor/Images/CallADoctor-logo-small.png')  # Change the path to your own logo image
-backIconImage = os.path.join(dir, 'C:/Users/mwk02/OneDrive/Desktop/5001CEMApril2024-main/CallADoctor/Images/back-icon.png') # Change the path to your own logo image
+logoImageFile = os.path.join(dir,'../Images/CallADoctor-logo-small.png')  # Change the path to your own logo image
+backIconImage = os.path.join(dir, '../Images/back-icon.png') # Change the path to your own logo image
 
 # Initialize Firebase
 cred = credentials.Certificate(serviceAccountKeyFile)
@@ -391,6 +391,9 @@ class DoctorListPage(tk.Frame):
 
         pending_scrollbar.config(command=self.pending_canvas.yview)
         existing_scrollbar.config(command=self.existing_canvas.yview)
+
+        self.pending_canvas.yview_moveto(0)
+        self.existing_canvas.yview_moveto(0)
 
         self.pending_content = tk.Frame(self.pending_canvas, bg='#B2E7B1')
         self.existing_content = tk.Frame(self.existing_canvas, bg='#E9B6A6')
