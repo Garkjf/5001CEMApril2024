@@ -25,7 +25,7 @@ def start_doctor(doctor_id):
     subprocess.call(["python", os.path.join(dir, 'DoctorPage.py')] + [doctor_id])
 
 def start_admin(admin_id):
-    subprocess.call(["python", os.path.join(dir, 'doctor_list.py')] + [admin_id])
+    subprocess.call(["python", os.path.join(dir, 'Clinic_Admin.py')] + [admin_id])
 
 class LoginPage(tk.Frame):
     def __init__(self, parent):
