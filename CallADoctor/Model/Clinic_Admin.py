@@ -168,9 +168,9 @@ class PatientRequest(tk.Frame):
                     reject_button.pack(side=tk.LEFT, padx=5, pady=5)
 
     def accept_appointment(self, appointment_id):
-        # Update appointment status to "Accepted" in Firebase
+        # Update appointment status to "Approved" in Firebase
         appointments_ref = db.reference('appointment')
-        appointments_ref.child(appointment_id).update({'status': 'Accepted'})
+        appointments_ref.child(appointment_id).update({'status': 'Approved'})
 
         # Refresh appointment list
         self.refresh_appointments()
