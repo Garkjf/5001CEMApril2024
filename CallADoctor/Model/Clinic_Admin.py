@@ -106,20 +106,20 @@ class PatientRequest(tk.Frame):
             requests_label.pack(pady=10, padx=20)  # Add padding to the sides to keep the text from expanding
 
         # Create a canvas widget and associate it with a scrollbar
-        canvas = tk.Canvas(self.main_frame, bg='#f7f7eb')
-        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.canvas = tk.Canvas(self.main_frame, bg='#f7f7eb')
+        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        scrollbar = tk.Scrollbar(self.main_frame, orient=tk.VERTICAL, command=canvas.yview)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.scrollbar = tk.Scrollbar(self.main_frame, orient=tk.VERTICAL, command=self.canvas.yview)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Configure the canvas to use the scrollbar
-        canvas.configure(yscrollcommand=scrollbar.set)
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
         # Create a frame inside the canvas to hold the patient requests
-        self.patientrequest_frame = tk.Frame(canvas, bg='#f7f7eb')
-        self.patientrequest_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        self.patientrequest_frame = tk.Frame(self.canvas, bg='#f7f7eb')
+        self.patientrequest_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
         
-        canvas.create_window((0, 0), window=self.patientrequest_frame, anchor="nw")
+        self.canvas.create_window((0, 0), window=self.patientrequest_frame, anchor="nw")
 
         # Fetch appointment data from Firebase and display
         self.refresh_appointments()
@@ -128,6 +128,9 @@ class PatientRequest(tk.Frame):
         # Clear existing appointment boxes
         for widget in self.patientrequest_frame.winfo_children():
             widget.destroy()
+
+        # Reset the canvas's scroll position to the top
+        self.canvas.yview_moveto(0)
 
         # Fetch appointment data from Firebase
         appointments_ref = db.reference('appointment')
@@ -168,9 +171,9 @@ class PatientRequest(tk.Frame):
                     reject_button.pack(side=tk.LEFT, padx=5, pady=5)
 
     def accept_appointment(self, appointment_id):
-        # Update appointment status to "Approved" in Firebase
+        # Update appointment status to "Accepted" in Firebase
         appointments_ref = db.reference('appointment')
-        appointments_ref.child(appointment_id).update({'status': 'Approved'})
+        appointments_ref.child(appointment_id).update({'status': 'Accepted'})
 
         # Refresh appointment list
         self.refresh_appointments()
@@ -191,13 +194,13 @@ class PatientRequest(tk.Frame):
         # Clear appointment boxes
         for widget in self.patientrequest_frame.winfo_children():
             widget.destroy()
-
+    
         # Fetch appointment details
         appointments_ref = db.reference('appointment')
         appointment_info = appointments_ref.child(appointment_id).get()
 
-        # Button to go back to appointment list
         back_button = ttk.Button(self.patientrequest_frame, image=self.back_icon_image, style='TButton', command=self.refresh_appointments)
+        back_button.image = self.back_icon_image  # Keep a reference to avoid garbage collection
         back_button.pack(side=tk.TOP, anchor='ne', pady=1, padx=40)
 
         # Display detailed information
@@ -251,30 +254,30 @@ class PatientRequest(tk.Frame):
         if doctor_data:
             # Button to go back to appointment details
             back_button = ttk.Button(self.patientrequest_frame, image=self.back_icon_image, style='TButton', command=lambda: self.view_appointment_details(appointment_id))
+            back_button.image = self.back_icon_image  # Keep a reference to avoid garbage collection
             back_button.pack(side=tk.TOP, anchor='ne', pady=1, padx=1)
 
             # Display doctor information
-            # Display doctor details in the main frame
             DoctorDetail_label = ttk.Label(self.patientrequest_frame, text=f"Doctor Detail: ", font=("Arial", 14), background="#f7f7eb")
             DoctorDetail_label.pack(pady=10, anchor="w")
 
-            name_label = ttk.Label(self.patientrequest_frame, text=f"Doctor Name: {doc_info.get('username')}", font=("Arial", 12), background="#f7f7eb")
+            name_label = ttk.Label(self.patientrequest_frame, text=f"Doctor Name: {doctor_data.get('username')}", font=("Arial", 12), background="#f7f7eb")
             name_label.pack(pady=10, anchor="w")
 
-            specialty_label = ttk.Label(self.patientrequest_frame, text=f"Speciality: {doc_info.get('specialist')}", font=("Arial", 12), background="#f7f7eb")
+            specialty_label = ttk.Label(self.patientrequest_frame, text=f"Speciality: {doctor_data.get('specialist')}", font=("Arial", 12), background="#f7f7eb")
             specialty_label.pack(pady=10, anchor="w")
 
             ContactDetail_label = ttk.Label(self.patientrequest_frame, text=f"Contact Detail: ", font=("Arial", 14), background="#f7f7eb")
             ContactDetail_label.pack(pady=10, anchor="w")
 
-            email_label = ttk.Label(self.patientrequest_frame, text=f"Email Address: {doc_info.get('email')}", font=("Arial", 12), background="#f7f7eb")
+            email_label = ttk.Label(self.patientrequest_frame, text=f"Email Address: {doctor_data.get('email')}", font=("Arial", 12), background="#f7f7eb")
             email_label.pack(pady=10, anchor="w")
 
-            # Assuming 'phone' is a field in your database for each doctor
-            phone_label = ttk.Label(self.patientrequest_frame, text=f"Phone Number: {doc_info.get('phone')}", font=("Arial", 12), background="#f7f7eb")
+            phone_label = ttk.Label(self.patientrequest_frame, text=f"Phone Number: {doctor_data.get('phone')}", font=("Arial", 12), background="#f7f7eb")
             phone_label.pack(pady=10, anchor="w")
 
-            columns = ('Patient Name','Appointment and Time', 'Status')
+            # Create Treeview for doctor's appointments
+            columns = ('Patient Name', 'Appointment Date and Time', 'Status')
             tree = ttk.Treeview(self.patientrequest_frame, columns=columns, show='headings')
 
             # Define column headings
@@ -282,11 +285,17 @@ class PatientRequest(tk.Frame):
                 tree.heading(col, text=col)
 
             # Insert appointment data into Treeview
-            tree.insert('', 'end', values=(appointment_info.get('username', ''),
-                                        f"{appointment_info.get('appointment_date', '')} {appointment_info.get('appointment_time', '')}",
-                                        appointment_info.get('status', '')))
+            for app_id, app_info in appointments_ref.get().items():
+                if app_info.get('doctor_name') == doctor_name:
+                    tree.insert('', 'end', values=(
+                        app_info.get('username', ''),
+                        f"{app_info.get('appointment_date', '')} {app_info.get('appointment_time', '')}",
+                        app_info.get('status', '')
+                    ))
 
             tree.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
+
+
 
 class DoctorListPage(tk.Frame):
     def __init__(self, parent, logo_path, admin_id):
@@ -309,6 +318,8 @@ class DoctorListPage(tk.Frame):
 
     def create_widgets(self):
         self.parent.title("Admin Page")
+
+        # Logo setup
         logo_image = tk.PhotoImage(file=self.logo_path)
         logo_image = logo_image.subsample(2, 2)
         header_frame = tk.Frame(self.parent, bg='#f7f7eb')
@@ -316,6 +327,8 @@ class DoctorListPage(tk.Frame):
         logo_label = tk.Label(header_frame, image=logo_image, bg='#f7f7eb')
         logo_label.image = logo_image
         logo_label.pack(side=tk.LEFT, padx=10, pady=10)
+
+        # Styling setup
         style = ttk.Style()
         style.configure('TButton', font=('Arial', 12), padding=10, background='White')
         style.map('TButton',
@@ -328,6 +341,7 @@ class DoctorListPage(tk.Frame):
                   background=[('active', '#82a383')],
                   relief=[('pressed', 'sunken'), ('!pressed', 'raised')])
 
+        # Navigation buttons
         def open_doctor_list():
             for widget in self.parent.winfo_children():
                 widget.destroy()
@@ -349,6 +363,7 @@ class DoctorListPage(tk.Frame):
         btn_patient_request = ttk.Button(header_frame, text="Patient Request", style='TButton', command=open_patient_request)
         btn_patient_request.pack(side=tk.RIGHT, padx=10, pady=10)
 
+        # Main frame setup
         self.main_frame = tk.Frame(self.parent, bg='#f7f7eb')
         self.main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
         self.columns_frame = tk.Frame(self.main_frame, bg='#f7f7eb')
@@ -357,26 +372,38 @@ class DoctorListPage(tk.Frame):
         self.pending_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
         self.existing_frame = tk.Frame(self.columns_frame, bg='#E9B6A6')
         self.existing_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+
         pending_label = tk.Label(self.pending_frame, text="Add to Current Doctor List", font=("Arial", 16, "bold"), bg='#B2E7B1')
         pending_label.pack(pady=10)
         existing_label = tk.Label(self.existing_frame, text="Remove from Current Doctor List", font=("Arial", 16, "bold"), bg='#E9B6A6')
         existing_label.pack(pady=10)
+
+        # Scrollbars setup
         pending_scrollbar = ttk.Scrollbar(self.pending_frame, orient=tk.VERTICAL)
         pending_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         existing_scrollbar = ttk.Scrollbar(self.existing_frame, orient=tk.VERTICAL)
         existing_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
         self.pending_canvas = tk.Canvas(self.pending_frame, yscrollcommand=pending_scrollbar.set, bg='#B2E7B1')
         self.pending_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.existing_canvas = tk.Canvas(self.existing_frame, yscrollcommand=existing_scrollbar.set, bg='#E9B6A6')
         self.existing_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
         pending_scrollbar.config(command=self.pending_canvas.yview)
         existing_scrollbar.config(command=self.existing_canvas.yview)
+
         self.pending_content = tk.Frame(self.pending_canvas, bg='#B2E7B1')
         self.existing_content = tk.Frame(self.existing_canvas, bg='#E9B6A6')
         self.pending_canvas.create_window((0, 0), window=self.pending_content, anchor=tk.NW)
         self.existing_canvas.create_window((0, 0), window=self.existing_content, anchor=tk.NW)
+
         self.pending_content.bind("<Configure>", lambda e: self.pending_canvas.configure(scrollregion=self.pending_canvas.bbox("all")))
         self.existing_content.bind("<Configure>", lambda e: self.existing_canvas.configure(scrollregion=self.existing_canvas.bbox("all")))
+
+        # Filter by specialist setup
+        filter_label = ttk.Label(header_frame, text="Filter by Specialist", font=("Arial", 12), background="#f7f7eb")
+        filter_label.pack(side=tk.LEFT, padx=10, pady=10)
+
         self.specialty_var = tk.StringVar()
         self.specialty_combobox = ttk.Combobox(header_frame, textvariable=self.specialty_var, values=self.specialties)
         self.specialty_combobox.pack(side=tk.RIGHT, padx=10, pady=10)
@@ -439,7 +466,7 @@ class DoctorListPage(tk.Frame):
         back_button.image = back_image
         back_button.pack(side=tk.TOP, anchor='ne', pady=10, padx=10)
 
-        DoctorDetail_label = ttk.Label(self.main_frame, text=f"Doctor Detail: ", font=("Arial", 14), background="#f7f7eb")
+        DoctorDetail_label = ttk.Label(self.main_frame, text="Doctor Detail: ", font=("Arial", 14), background="#f7f7eb")
         DoctorDetail_label.pack(pady=10, anchor="w")
 
         name_label = ttk.Label(self.main_frame, text=f"Doctor Name: {doctor_data.get('username')}", font=("Arial", 12), background="#f7f7eb")
@@ -448,7 +475,7 @@ class DoctorListPage(tk.Frame):
         specialty_label = ttk.Label(self.main_frame, text=f"Specialty: {doctor_data.get('specialist')}", font=("Arial", 12), background="#f7f7eb")
         specialty_label.pack(pady=10, anchor="w")
 
-        ContactDetail_label = ttk.Label(self.main_frame, text=f"Contact Detail: ", font=("Arial", 14), background="#f7f7eb")
+        ContactDetail_label = ttk.Label(self.main_frame, text="Contact Detail: ", font=("Arial", 14), background="#f7f7eb")
         ContactDetail_label.pack(pady=10, anchor="w")
 
         email_label = ttk.Label(self.main_frame, text=f"Email Address: {doctor_data.get('email')}", font=("Arial", 12), background="#f7f7eb")
@@ -456,6 +483,27 @@ class DoctorListPage(tk.Frame):
 
         phone_label = ttk.Label(self.main_frame, text=f"Phone Number: {doctor_data.get('phone')}", font=("Arial", 12), background="#f7f7eb")
         phone_label.pack(pady=10, anchor="w")
+
+        # Create Treeview for doctor's appointments
+        columns = ('Patient Name', 'Appointment Date and Time', 'Status')
+        tree = ttk.Treeview(self.main_frame, columns=columns, show='headings')
+
+        # Define column headings
+        for col in columns:
+            tree.heading(col, text=col)
+
+        # Fetch and insert appointment data into Treeview
+        appointments_ref = db.reference('appointment')
+        for app_id, app_info in appointments_ref.get().items():
+            if app_info.get('doctor_name') == doctor_data.get('username'):
+                tree.insert('', 'end', values=(
+                    app_info.get('username', ''),
+                    f"{app_info.get('appointment_date', '')} {app_info.get('appointment_time', '')}",
+                    app_info.get('status', '')
+                ))
+
+        tree.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
+
 
     def reinitialize_page(self):
         for widget in self.parent.winfo_children():
