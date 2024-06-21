@@ -175,6 +175,9 @@ class PatientRequest(tk.Frame):
         appointments_ref = db.reference('appointment')
         appointments_ref.child(appointment_id).update({'status': 'Accepted'})
 
+        # Show a confirmation message
+        messagebox.showinfo("Success", "The appointment has been accepted.")
+
         # Refresh appointment list
         self.refresh_appointments()
 
@@ -182,6 +185,9 @@ class PatientRequest(tk.Frame):
         # Update appointment status to "Rejected" in Firebase
         appointments_ref = db.reference('appointment')
         appointments_ref.child(appointment_id).update({'status': 'Rejected'})
+
+        # Show a confirmation message
+        messagebox.showinfo("Success", "The appointment has been rejected.")
 
         # Refresh appointment list
         self.refresh_appointments()
@@ -294,8 +300,6 @@ class PatientRequest(tk.Frame):
                     ))
 
             tree.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
-
-
 
 class DoctorListPage(tk.Frame):
     def __init__(self, parent, logo_path, admin_id):
@@ -517,16 +521,19 @@ class DoctorListPage(tk.Frame):
         ref = db.reference(f'doctors/{doctor_id}')
         ref.update({'status': 'Existing'})
         self.load_doctors()
+        messagebox.showinfo("Success", "The request has been accepted.")
 
     def reject_request(self, doctor_id):
         ref = db.reference(f'doctors/{doctor_id}')
         ref.delete()
         self.load_doctors()
+        messagebox.showinfo("Success", "The request has been rejected.")
 
     def remove_doctor(self, doctor_id):
         ref = db.reference(f'doctors/{doctor_id}')
         ref.update({'status': 'Pending'})
         self.load_doctors()
+        messagebox.showinfo("Success", "The doctor has been removed.")
 
     def filter_doctors(self, event):
         selected_specialty = self.specialty_var.get()
@@ -539,7 +546,6 @@ class DoctorListPage(tk.Frame):
             if doc_info.get('clinic_name') == self.clinic['clinic_name'] and doc_info.get('clinic_state') == self.clinic['clinic_state']:
                 if selected_specialty == "All" or doc_info.get('specialist') == selected_specialty:
                     self.add_doctor_box(doctor_id, doc_info)
-
 
 if __name__ == "__main__":
     root = tk.Tk()
