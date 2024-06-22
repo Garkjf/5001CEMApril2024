@@ -337,7 +337,7 @@ class DoctorPage(tk.Frame):
             "diagnosis": self.diagnosis_entry.get(),
             "treatment": self.treatment_entry.get(),
             "remark": self.remark_entry.get(),
-            "symptoms": self.diagnosis_entry.get(),
+            "symptoms": self.symptoms_entry.get(),
             "patientID": patient_id,
             "doctorID": doctor_id,
             "created_at": current_datetime

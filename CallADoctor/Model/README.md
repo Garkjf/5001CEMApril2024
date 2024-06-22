@@ -1,8 +1,18 @@
-**ClinicAdministrator.py**
+**Clinic_Admin.py**
 is a Python script that provides the clinic administrator interface for our application. It allows to manage appointments and assign the appointment request to specific doctor.
+
+
+**doctor_list.py**
+is a Python script that include all the functions of allows clinic admin to manage appointments.
+
+
+**patient_request.py**
+is a Python script that include all the functions of all clinic admin to assign the appointment request to specific doctor.
+
 
 **DoctorPage.py** 
 is a Python script that provides the doctor interface for our application. It allows doctors to view their patients' medical records and Patient Informatiion.
+
 
 **Login.py**  
 is a Python script that handles the login process for our application. It verifies user credentials and directs users to the appropriate interface based on their role (patient, doctor, or admin).
