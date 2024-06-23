@@ -336,10 +336,10 @@ class DoctorPage(tk.Frame):
         newPrescription = {
             "diagnosis": self.diagnosis_entry.get(),
             "treatment": self.treatment_entry.get(),
-            "remark": self.remark_entry.get(),
+            "remark": self.remark_entry.get('1.0', tk.END).strip(),
             "symptoms": self.symptoms_entry.get(),
             "patientID": patient_id,
-            "doctorID": doctor_id,
+            "doctorID": self.doctor_id,
             "created_at": current_datetime
         }
         db.reference('prescriptions').push(newPrescription)

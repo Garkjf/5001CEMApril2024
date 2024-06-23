@@ -1,7 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-from firebase_admin import credentials, initialize_app ,db
+import firebase_admin
+from firebase_admin import credentials, initialize_app ,db, get_app
 from tkinter.font import BOLD, Font
 from tkcalendar import Calendar
 from datetime import datetime
@@ -10,7 +11,7 @@ import pytz
 import os
 import subprocess
 import sys
-import PatientPage
+# import PatientPage
 
 # Create relative file paths
 dir = os.path.dirname(__file__)
@@ -28,8 +29,13 @@ class PatientPage(tk.Frame):
 
         super().__init__(parent, bg="#F6F6E9")
         self.pack(fill=tk.BOTH, expand=True)
-        cred = credentials.Certificate(serviceAccountKeyFile)
-        initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
+        try:
+            # Attempt to get the Firebase app instance
+            self.app = get_app()
+        except ValueError:
+            # Initialize Firebase if it's not already initialized
+            cred = credentials.Certificate(serviceAccountKeyFile)
+            self.app = initialize_app(cred, {'databaseURL': 'https://calladoctor-5001-default-rtdb.asia-southeast1.firebasedatabase.app/'})
 
     def searchClinic(self):
         self.clearClinicInfo()  
@@ -368,7 +374,7 @@ class PatientPage(tk.Frame):
         label.grid(row=0, column=0, padx=20, pady=10, sticky="w")
 
         # get patient information
-        patient_ref = db.reference('patients/' + self.patient_id)
+        patient_ref = db.reference('patients/' + str(self.patient_id))
         patient_data = patient_ref.get()
 
         label = tk.Label(self, text="Patient Information", bg="#F6F6E9", font=bold12)
@@ -452,8 +458,22 @@ class PatientPage(tk.Frame):
         selected_clinic_state = self.clinic_state_var.get()
         selected_clinic_name = self.clinic_var.get()
 
-        filtered_doctors = [doctor for doctor in doctors.values() if doctor['clinic_state'] == selected_clinic_state and doctor['clinic_name'] == selected_clinic_name]
+        # Ensure have data and not a string
+        if not doctors or isinstance(doctors, str):
+            raise ValueError("Failed to retrieve valid doctors data")
         
+        filtered_doctors = []
+
+        # Iterate over each doctor in the snapshot
+        for doctor_key, doctor_data in doctors.items():
+            # Check if doctor_data is a dictionary
+            if not isinstance(doctor_data, dict):
+                continue
+
+            # Check if the doctor's clinic state and name match the selected ones
+            if doctor_data.get('clinic_state') == selected_clinic_state and doctor_data.get('clinic_name') == selected_clinic_name:
+                filtered_doctors.append(doctor_data)
+          
         label = tk.Label(self, text="Doctor Information", bg="#f6f6e9", font=bold12)
         label.grid(row=1, column=3, padx=20, pady=10, sticky="w")
 
