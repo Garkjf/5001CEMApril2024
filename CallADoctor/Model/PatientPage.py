@@ -613,7 +613,7 @@ class PatientPage(tk.Frame):
         elif appointment_date == current_datetime.date() and current_datetime.time().hour < 17:
             available_times = ["Choose Time Slot"]
             for i in range(9, 18):
-                if current_datetime.time().hour < i:
+                if current_datetime.time().hour + 1 < i:
                     if i < 10:
                         available_times.append(f"0{i}:00")
                     else:
